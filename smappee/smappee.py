@@ -49,7 +49,7 @@ class Smappee(object):
     def get_service_locations(self):
         return self.service_locations
 
-    def update_consumptions_and_appliance_states(self):
+    def update_trends_and_appliance_states(self):
         for _, sl in self.service_locations.items():
             sl.update_trends_and_appliance_states()
 
