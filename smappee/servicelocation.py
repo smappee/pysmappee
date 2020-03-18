@@ -268,12 +268,12 @@ class SmappeeServiceLocation(object):
         self.realtime_values['alwayson'] = power_data['alwaysOn']
 
         if 'phaseVoltageData' in power_data:
-            self.realtime_values['phase_voltages'] = power_data['phaseVoltageData']
+            self.realtime_values['phase_voltages'] = [pv / 10 for pv in power_data['phaseVoltageData']]
             self.realtime_values['phase_voltages_h3'] = power_data['phaseVoltageH3Data']
             self.realtime_values['phase_voltages_h5'] = power_data['phaseVoltageH5Data']
 
         if 'lineVoltageData' in power_data:
-            self.realtime_values['line_voltages'] = power_data['lineVoltageData']
+            self.realtime_values['line_voltages'] = [lv / 10 for lv in power_data['lineVoltageData']]
             self.realtime_values['line_voltages_h3'] = power_data['lineVoltageH3Data']
             self.realtime_values['line_voltages_h5'] = power_data['lineVoltageH5Data']
 
