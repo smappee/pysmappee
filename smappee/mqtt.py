@@ -142,6 +142,10 @@ class SmappeeMqtt(threading.Thread):
             elif message.topic == f'servicelocation/{self.service_location_uuid}/h1vector':
                 pass
 
+            # nilm
+            elif message.topic == f'servicelocation/{self.service_location_uuid}/nilm':
+                pass
+
             # controllable nodes (general messages)
             elif message.topic == f'servicelocation/{self.service_location_uuid}':
                 pass
