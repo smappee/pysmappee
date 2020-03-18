@@ -132,6 +132,20 @@ class SmappeeServiceLocation(object):
     def get_service_location_uuid(self):
         return self.service_location_uuid
 
+    def get_device_model(self):
+        model_mapping = {
+            '10': 'Smappee Energy',
+            '11': 'Smappee Solar',
+            '20': 'Smappee Pro/Plus',
+            '50': 'Smappee Genius',
+            '51': 'Smappee Connect',
+            '57': 'Smappee P1S1 module',
+        }
+        if self.device_serial_number[:2] in model_mapping:
+            return model_mapping[self.device_serial_number[:2]]
+        else:
+            'Smappee'
+
     def get_device_serial_number(self):
         return self.device_serial_number
 
