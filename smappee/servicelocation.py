@@ -57,8 +57,14 @@ class SmappeeServiceLocation(object):
         # extracted consumption values
         self.aggregated_values = {
             'power_today': None,
+            'power_last_hour': None,
+            'power_last_5_minutes': None,
             'solar_today': None,
+            'solar_last_hour': None,
+            'solar_last_5_minutes': None,
             'alwayson_today': None,
+            'alwayson_last_hour': None,
+            'alwasyon_last_5_minutes': None
         }
 
         self.cache = TTLCache(maxsize=100, ttl=600)
@@ -314,25 +320,29 @@ class SmappeeServiceLocation(object):
             measurement.update_active(active=active_power_data, source='LOCAL')
             measurement.update_current(current=current_data, source='LOCAL')
 
-    def update_todays_consumptions(self, aggtype=3, delta=1440):
-        if 'total_consumption_today' in self.cache:
+    def update_active_consumptions(self, trend='today'):
+        params = {
+            'today': {'aggtype': 3, 'delta': 1440},
+            'last_hour': {'aggtype': 2, 'delta': 120},
+            'last_5_minutes': {'aggtype': 1, 'delta': 10}
+        }
+
+        if f'total_consumption_{trend}' in self.cache:
             return
 
         end = datetime.utcnow()
-        start = end - timedelta(minutes=delta)
+        start = end - timedelta(minutes=params[trend]['delta'])
 
         consumption_result = self.smappee_api.get_consumption(service_location_id=self.service_location_id,
                                                               start=start,
                                                               end=end,
-                                                              aggregation=aggtype)
-        self.cache['total_consumption_today'] = consumption_result
+                                                              aggregation=params[trend]['aggtype'])
+        self.cache[f'total_consumption_{trend}'] = consumption_result
 
         if consumption_result['consumptions']:
-            self.aggregated_values = {
-                'power_today': consumption_result['consumptions'][0]['consumption'],
-                'solar_today': consumption_result['consumptions'][0]['solar'],
-                'alwayson_today': consumption_result['consumptions'][0]['alwaysOn'],
-            }
+            self.aggregated_values[f'power_{trend}'] = consumption_result['consumptions'][0]['consumption']
+            self.aggregated_values[f'solar_{trend}'] = consumption_result['consumptions'][0]['solar']
+            self.aggregated_values[f'alwayson_{trend}'] = consumption_result['consumptions'][0]['alwaysOn'] * 12
 
     def update_todays_actuator_consumptions(self, aggtype=3, delta=1440):
         end = datetime.utcnow()
@@ -381,7 +391,9 @@ class SmappeeServiceLocation(object):
 
     def update_trends_and_appliance_states(self, ):
         # update trend consumptions
-        self.update_todays_consumptions()
+        self.update_active_consumptions(trend='today')
+        self.update_active_consumptions(trend='last_hour')
+        self.update_active_consumptions(trend='last_5_minutes')
         self.update_todays_sensor_consumptions()
         self.update_todays_actuator_consumptions()
 
