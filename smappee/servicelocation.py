@@ -59,13 +59,13 @@ class SmappeeServiceLocation(object):
         # extracted consumption values
         self.aggregated_values = {
             'power_today': None,
-            'power_last_hour': None,
+            'power_current_hour': None,
             'power_last_5_minutes': None,
             'solar_today': None,
-            'solar_last_hour': None,
+            'solar_current_hour': None,
             'solar_last_5_minutes': None,
             'alwayson_today': None,
-            'alwayson_last_hour': None,
+            'alwayson_current_hour': None,
             'alwasyon_last_5_minutes': None
         }
 
@@ -346,8 +346,8 @@ class SmappeeServiceLocation(object):
     def update_active_consumptions(self, trend='today'):
         params = {
             'today': {'aggtype': 3, 'delta': 1440},
-            'last_hour': {'aggtype': 2, 'delta': 120},
-            'last_5_minutes': {'aggtype': 1, 'delta': 10}
+            'current_hour': {'aggtype': 2, 'delta': 60},
+            'last_5_minutes': {'aggtype': 1, 'delta': 9}
         }
 
         if f'total_consumption_{trend}' in self.cache:
@@ -415,7 +415,7 @@ class SmappeeServiceLocation(object):
     def update_trends_and_appliance_states(self, ):
         # update trend consumptions
         self.update_active_consumptions(trend='today')
-        self.update_active_consumptions(trend='last_hour')
+        self.update_active_consumptions(trend='current_hour')
         self.update_active_consumptions(trend='last_5_minutes')
         self.update_todays_sensor_consumptions()
         self.update_todays_actuator_consumptions()
