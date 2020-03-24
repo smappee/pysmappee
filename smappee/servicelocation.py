@@ -16,6 +16,7 @@ class SmappeeServiceLocation(object):
         self.service_location_uuid = service_location_uuid
         self.service_location_name = name
         self.device_serial_number = device_serial_number
+        self.phase_type = None
         self.firmware_version = None
 
         # api instance to (re)load consumption data
@@ -106,6 +107,9 @@ class SmappeeServiceLocation(object):
                             name=sensor['name'],
                             channels=sensor['channels'])
 
+        # Set phase type
+        self.phase_type = sl_metering_configuration['phaseType'] if 'phaseType' in sl_metering_configuration else None
+
         # Load channel configuration
         if 'measurements' in sl_metering_configuration:
             for measurement in sl_metering_configuration['measurements']:
@@ -148,6 +152,9 @@ class SmappeeServiceLocation(object):
 
     def get_device_serial_number(self):
         return self.device_serial_number
+
+    def get_phase_type(self):
+        return self.phase_type
 
     def set_coordinates(self, lat, lon):
         self.lat, self.lon = lat, lon
