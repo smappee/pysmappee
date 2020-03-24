@@ -17,6 +17,7 @@ class SmappeeServiceLocation(object):
         self.service_location_name = name
         self.device_serial_number = device_serial_number
         self.phase_type = None
+        self.has_solar = False
         self.firmware_version = None
 
         # api instance to (re)load consumption data
@@ -119,6 +120,9 @@ class SmappeeServiceLocation(object):
                                      subcircuitType=measurement['subcircuitType'] if 'subcircuitType' in measurement else None,
                                      channels=measurement['channels'])
 
+                if measurement['type'] == 'PRODUCTION':
+                    self.has_solar = True
+
         # Setup MQTT connection
         if not refresh:
             self.mqtt_connection_central = self.load_mqtt_connection(kind='central')
@@ -155,6 +159,9 @@ class SmappeeServiceLocation(object):
 
     def get_phase_type(self):
         return self.phase_type
+
+    def has_solar_production(self):
+        return self.has_solar
 
     def set_coordinates(self, lat, lon):
         self.lat, self.lon = lat, lon
