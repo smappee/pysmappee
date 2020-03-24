@@ -100,7 +100,9 @@ class SmappeeServiceLocation(object):
         for actuator in sl_metering_configuration['actuators']:
             self.add_actuator(id=actuator['id'],
                               name=actuator['name'],
-                              actuator_type=actuator['type'] if 'type' in actuator else 'CCD_LEAF_LITE')
+                              serialnumber=actuator['serialNumber'] if 'serialNumber' in actuator else None,
+                              state_values=actuator['states'],
+                              actuator_type=actuator['type'])
 
         # Load sensors (Smappee Gas and Water)
         for sensor in sl_metering_configuration['sensors']:
@@ -217,7 +219,7 @@ class SmappeeServiceLocation(object):
                 # delta appliance
                 self.appliances[id].set_state(state=True if events[0]['activePower'] > 0 else False)
 
-    def add_actuator(self, id, name, actuator_type):
+    def add_actuator(self, id, name, serialnumber, state_values, actuator_type):
         type_mapping = {
             'CCD_CHACON_SIMPLE': 'PLUG',
             'CCD_ELRO_SIMPLE': 'PLUG',
@@ -227,34 +229,27 @@ class SmappeeServiceLocation(object):
         }
         self.actuators[id] = SmappeeActuator(id=id,
                                              name=name,
-                                             actuator_type=type_mapping[actuator_type])
+                                             serialnumber=serialnumber,
+                                             state_values=state_values,
+                                             type=type_mapping[actuator_type])
 
-        if self.actuators[id].actuator_type in ['SWITCH']:
-            # Get actuator state
-            state = self.smappee_api.get_actuator_state(service_location_id=self.service_location_id,
-                                                        actuator_id=id)
-            self.actuators[id].set_state(state=state)
+        # Get actuator state
+        state = self.smappee_api.get_actuator_state(service_location_id=self.service_location_id,
+                                                    actuator_id=id)
+        self.actuators[id].set_state(state=state)
 
     def get_actuators(self):
         return self.actuators
 
-    def actuator_on(self, id):
+    def set_actuator_state(self, id, state, since=None, api=True):
         if id in self.actuators:
-            self.smappee_api.actuator_on(service_location_id=self.service_location_id,
-                                         actuator_id=id)
-            self.actuators.get(id).set_state(state='ON')
+            if api:
+                self.smappee_api.set_actuator_state(service_location_id=self.service_location_id,
+                                                    actuator_id=id,
+                                                    state_id=state)
+            self.actuators.get(id).set_state(state=state)
 
-    def actuator_off(self, id):
-        if id in self.actuators:
-            self.smappee_api.actuator_off(service_location_id=self.service_location_id,
-                                          actuator_id=id)
-            self.actuators.get(id).set_state(state='OFF')
-
-    def set_actuator_state(self, id, state, since):
-        if id in self.actuators:
-            self.actuators[id].set_state(state=state)
-
-    def set_actuator_connection_state(self, id, connection_state, since):
+    def set_actuator_connection_state(self, id, connection_state, since=None):
         if id in self.actuators:
             self.actuators[id].set_connection_state(connectionState=connection_state)
 

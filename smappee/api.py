@@ -168,19 +168,8 @@ class SmappeeApi(object):
         return r.text
 
     @authenticated
-    def actuator_on(self, service_location_id, actuator_id, duration=None):
-        return self._actuator_on_off(
-            on_off='on', service_location_id=service_location_id,
-            actuator_id=actuator_id, duration=duration)
-
-    @authenticated
-    def actuator_off(self, service_location_id, actuator_id, duration=None):
-        return self._actuator_on_off(
-            on_off='off', service_location_id=service_location_id,
-            actuator_id=actuator_id, duration=duration)
-
-    def _actuator_on_off(self, on_off, service_location_id, actuator_id, duration=None):
-        url = urljoin(self.servicelocation_url, service_location_id, "actuator", actuator_id, on_off)
+    def set_actuator_state(self, service_location_id, actuator_id, state_id, duration=None):
+        url = urljoin(self.servicelocation_url, service_location_id, "actuator", actuator_id, state_id)
         headers = {"Authorization": f"Bearer {self.access_token}"}
         data = {} if duration is None else {"duration": duration}
         r = requests.post(url, headers=headers, json=data)

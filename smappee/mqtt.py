@@ -213,7 +213,8 @@ class SmappeeMqtt(threading.Thread):
                 if state_type == 'state' and self.kind == 'central':
                     self.service_location.set_actuator_state(id=plug_id,
                                                              state=plug_state,
-                                                             since=plug_state_since)
+                                                             since=plug_state_since,
+                                                             api=False)
                 elif state_type == 'connectionState':
                     self.service_location.set_actuator_connection_state(id=plug_id,
                                                                         connection_state=plug_state,
