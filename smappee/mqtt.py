@@ -164,11 +164,19 @@ class SmappeeMqtt(threading.Thread):
                             maxCurrent=device['maximumCurrent'],
                             measurements=device['measurements'],
                         )
+                elif message.topic.endswith('/devices/updated'):
+                    pass
                 elif message.topic.endswith('/action/setcurrent'):
                     smart_device_uuid = message.topic.split('/')[-3]
                     set_current_details = json.loads(message.payload)
                     self.service_location.smart_devices[smart_device_uuid].set_current(phase=set_current_details['phase'],
                                                                                        current=set_current_details['value'])
+                elif message.topic.endswith('/action/startcharging'):
+                    pass
+                elif message.topic.endswith('/action/stopcharging'):
+                    pass
+                elif message.topic.endswith('/action/smartcharging'):
+                    pass
                 elif message.topic.endswith('/state'):
                     details = json.loads(message.payload)
                     smart_device_uuid = details['deviceUUID']
@@ -176,6 +184,8 @@ class SmappeeMqtt(threading.Thread):
                     if smart_device_uuid in self.service_location.smart_devices:
                         self.service_location.smart_devices[smart_device_uuid].set_connection_status(connection_status=connection_status)
                 elif message.topic.endswith('/etc/measuredvalues'):
+                    pass
+                elif message.topic.endswith('/property/chargingstate'):
                     pass
 
                 else:
