@@ -12,13 +12,13 @@ class SmappeeServiceLocation(object):
 
     def __init__(self, service_location_id, service_location_uuid, name, device_serial_number, smappee_api):
         # service location details
-        self.service_location_id = service_location_id
-        self.service_location_uuid = service_location_uuid
-        self.service_location_name = name
-        self.device_serial_number = device_serial_number
-        self.phase_type = None
-        self.has_solar = False
-        self.firmware_version = None
+        self._service_location_id = service_location_id
+        self._service_location_uuid = service_location_uuid
+        self._service_location_name = name
+        self._device_serial_number = device_serial_number
+        self._phase_type = None
+        self._has_solar_production = False
+        self._firmware_version = None
 
         # api instance to (re)load consumption data
         self.smappee_api = smappee_api
@@ -28,22 +28,22 @@ class SmappeeServiceLocation(object):
         self.mqtt_connection_local = None
 
         # coordinates
-        self.lat = None
-        self.lon = None
-        self.timezone = None
+        self._latitude = None
+        self._longitude = None
+        self._timezone = None
 
         # presence
-        self.presence = None
+        self._presence = None
 
         # dicts to hold appliances, smart switches, ct details and smart devices by id
-        self.appliances = {}
-        self.actuators = {}
-        self.sensors = {}
-        self.measurements = {}
-        self.smart_devices = {}
+        self._appliances = {}
+        self._actuators = {}
+        self._sensors = {}
+        self._measurements = {}
+        self._smart_devices = {}
 
         # realtime values
-        self.realtime_values = {
+        self._realtime_values = {
             'total_power': None,
             'total_reactive_power': None,
             'solar_power': None,
@@ -57,7 +57,7 @@ class SmappeeServiceLocation(object):
         }
 
         # extracted consumption values
-        self.aggregated_values = {
+        self._aggregated_values = {
             'power_today': None,
             'power_current_hour': None,
             'power_last_5_minutes': None,
@@ -69,7 +69,7 @@ class SmappeeServiceLocation(object):
             'alwasyon_last_5_minutes': None
         }
 
-        self.cache = TTLCache(maxsize=100, ttl=600)
+        self._cache = TTLCache(maxsize=100, ttl=300)
 
         self.load_configuration()
 
@@ -83,122 +83,155 @@ class SmappeeServiceLocation(object):
         sl_metering_configuration = self.smappee_api.get_metering_configuration(service_location_id=self.service_location_id)
 
         # Service location details
-        self.set_service_location_name(service_location_name=sl_metering_configuration['name'])
+        self.service_location_name = sl_metering_configuration.get('name')
 
         # Set coordinates and timezone
-        self.set_coordinates(lat=sl_metering_configuration['lat'],
-                             lon=sl_metering_configuration['lon'])
-        self.set_timezone(timezone=sl_metering_configuration['timezone'])
+        self.latitude = sl_metering_configuration.get('lat')
+        self.longitude = sl_metering_configuration.get('lon')
+        self.timezone = sl_metering_configuration.get('timezone')
 
         # Load appliances
-        for appliance in sl_metering_configuration['appliances']:
-            self.add_appliance(id=appliance['id'],
-                               name=appliance['name'],
-                               type=appliance['type'])
+        for appliance in sl_metering_configuration.get('appliances'):
+            self.add_appliance(id=appliance.get('id'),
+                               name=appliance.get('name'),
+                               type=appliance.get('type'))
 
         # Load actuators (Smappee Switches, Comfort Plugs, IO modules)
-        for actuator in sl_metering_configuration['actuators']:
-            self.add_actuator(id=actuator['id'],
-                              name=actuator['name'],
-                              serialnumber=actuator['serialNumber'] if 'serialNumber' in actuator else None,
-                              state_values=actuator['states'],
-                              actuator_type=actuator['type'])
+        for actuator in sl_metering_configuration.get('actuators'):
+            self.add_actuator(id=actuator.get('id'),
+                              name=actuator.get('name'),
+                              serialnumber=actuator.get('serialNumber') if 'serialNumber' in actuator else None,
+                              state_values=actuator.get('states'),
+                              actuator_type=actuator.get('type'))
 
         # Load sensors (Smappee Gas and Water)
-        for sensor in sl_metering_configuration['sensors']:
-            self.add_sensor(id=sensor['id'],
-                            name=sensor['name'],
-                            channels=sensor['channels'])
+        for sensor in sl_metering_configuration.get('sensors'):
+            self.add_sensor(id=sensor.get('id'),
+                            name=sensor.get('name'),
+                            channels=sensor.get('channels'))
 
         # Set phase type
-        self.phase_type = sl_metering_configuration['phaseType'] if 'phaseType' in sl_metering_configuration else None
+        self.phase_type = sl_metering_configuration.get('phaseType') if 'phaseType' in sl_metering_configuration else None
 
         # Load channel configuration
         if 'measurements' in sl_metering_configuration:
-            for measurement in sl_metering_configuration['measurements']:
-                self.add_measurement(id=measurement['id'],
-                                     name=measurement['name'],
-                                     type=measurement['type'],
-                                     subcircuitType=measurement['subcircuitType'] if 'subcircuitType' in measurement else None,
-                                     channels=measurement['channels'])
+            for measurement in sl_metering_configuration.get('measurements'):
+                self.add_measurement(id=measurement.get('id'),
+                                     name=measurement.get('name'),
+                                     type=measurement.get('type'),
+                                     subcircuitType=measurement.get('subcircuitType') if 'subcircuitType' in measurement else None,
+                                     channels=measurement.get('channels'))
 
-                if measurement['type'] == 'PRODUCTION':
-                    self.has_solar = True
+                if measurement.get('type') == 'PRODUCTION':
+                    self.has_solar_production = True
 
         # Setup MQTT connection
         if not refresh:
             self.mqtt_connection_central = self.load_mqtt_connection(kind='central')
             self.mqtt_connection_local = self.load_mqtt_connection(kind='local')
 
-    def set_service_location_name(self, service_location_name):
-        self.service_location_name = service_location_name
+    @property
+    def service_location_id(self):
+        return self._service_location_id
 
-    def get_service_location_name(self):
-        return self.service_location_name
+    @property
+    def service_location_uuid(self):
+        return self._service_location_uuid
 
-    def get_service_location_id(self):
-        return self.service_location_id
+    @property
+    def service_location_name(self):
+        return self._service_location_name
 
-    def get_service_location_uuid(self):
-        return self.service_location_uuid
+    @service_location_name.setter
+    def service_location_name(self, name):
+        self._service_location_name = name
 
-    def get_device_model(self):
+    @property
+    def device_serial_number(self):
+        return self._device_serial_number
+
+    @property
+    def device_model(self):
         model_mapping = {
-            '10': 'Smappee Energy',
-            '11': 'Smappee Solar',
-            '20': 'Smappee Pro/Plus',
-            '50': 'Smappee Genius',
-            '51': 'Smappee Connect',
-            '57': 'Smappee P1S1 module',
+            '10': 'Energy',
+            '11': 'Solar',
+            '20': 'Pro/Plus',
+            '50': 'Genius',
+            '51': 'Connect',
+            '57': 'P1S1 module',
         }
         if self.device_serial_number[:2] in model_mapping:
-            return model_mapping[self.device_serial_number[:2]]
+            return f'Smappee {model_mapping[self.device_serial_number[:2]]}'
         else:
             'Smappee'
 
-    def get_device_serial_number(self):
-        return self.device_serial_number
+    @property
+    def phase_type(self):
+        return self._phase_type
 
-    def get_phase_type(self):
-        return self.phase_type
+    @phase_type.setter
+    def phase_type(self, phase_type):
+        self._phase_type = phase_type
 
+    @property
     def has_solar_production(self):
-        return self.has_solar
+        return self._has_solar_production
 
-    def set_coordinates(self, lat, lon):
-        self.lat, self.lon = lat, lon
+    @has_solar_production.setter
+    def has_solar_production(self, has_solar_production):
+        self._has_solar_production = has_solar_production
 
-    def get_coordinates(self):
-        return self.lat, self.lon
+    @property
+    def latitude(self):
+        return self._latitude
 
-    def set_timezone(self, timezone):
-        self.timezone = timezone
+    @latitude.setter
+    def latitude(self, lat):
+        self._latitude = lat
 
-    def get_timezone(self):
-        return self.timezone
+    @property
+    def longitude(self):
+        return self._longitude
 
-    def set_firmware_version(self, firmware_version):
-        self.firmware_version = firmware_version
+    @longitude.setter
+    def longitude(self, lon):
+        self._longitude = lon
 
-    def get_firmware_version(self):
-        return self.firmware_version
+    @property
+    def timezone(self):
+        return self._timezone
 
-    def set_presence(self, presence):
-        self.presence = presence
+    @timezone.setter
+    def timezone(self, timezone):
+        self._timezone = timezone
 
+    @property
+    def firmware_version(self):
+        return self._firmware_version
+
+    @firmware_version.setter
+    def firmware_version(self, firmware_version):
+        self._firmware_version = firmware_version
+
+    @property
     def is_present(self):
-        return self.presence
+        return self._presence
+
+    @is_present.setter
+    def is_present(self, presence):
+        self._presence = presence
+
+    @property
+    def appliances(self):
+        return self._appliances
 
     def add_appliance(self, id, name, type):
         self.appliances[id] = SmappeeAppliance(id=id,
                                                name=name,
                                                type=type)
 
-    def get_appliances(self):
-        return self.appliances
-
     def update_appliance_state(self, id, delta=1440):
-        if f"appliance_{id}" in self.cache:
+        if f"appliance_{id}" in self._cache:
             return
 
         end = datetime.utcnow()
@@ -208,16 +241,20 @@ class SmappeeServiceLocation(object):
                                              appliance_id=id,
                                              start=start,
                                              end=end)
-        self.cache[f"appliance_{id}"] = events
+        self._cache[f"appliance_{id}"] = events
         if events:
-            power = abs(events[0]['activePower'])
-            self.appliances[id].set_power(power=power)
+            power = abs(events[0].get('activePower'))
+            self.appliances[id].power = power
             if 'state' in events[0]:
                 # program appliance
-                self.appliances[id].set_state(state=True if events[0]['state'] > 0 else False)
+                self.appliances[id].state = True if events[0].get('state') > 0 else False
             else:
                 # delta appliance
-                self.appliances[id].set_state(state=True if events[0]['activePower'] > 0 else False)
+                self.appliances[id].state = True if events[0].get('activePower') > 0 else False
+
+    @property
+    def actuators(self):
+        return self._actuators
 
     def add_actuator(self, id, name, serialnumber, state_values, actuator_type):
         type_mapping = {
@@ -231,15 +268,12 @@ class SmappeeServiceLocation(object):
                                              name=name,
                                              serialnumber=serialnumber,
                                              state_values=state_values,
-                                             type=type_mapping[actuator_type])
+                                             type=type_mapping.get(actuator_type))
 
         # Get actuator state
         state = self.smappee_api.get_actuator_state(service_location_id=self.service_location_id,
                                                     actuator_id=id)
-        self.actuators[id].set_state(state=state)
-
-    def get_actuators(self):
-        return self.actuators
+        self.actuators.get(id).state = state
 
     def set_actuator_state(self, id, state, since=None, api=True):
         if id in self.actuators:
@@ -247,27 +281,33 @@ class SmappeeServiceLocation(object):
                 self.smappee_api.set_actuator_state(service_location_id=self.service_location_id,
                                                     actuator_id=id,
                                                     state_id=state)
-            self.actuators.get(id).set_state(state=state)
+            self.actuators.get(id).state = state
 
     def set_actuator_connection_state(self, id, connection_state, since=None):
         if id in self.actuators:
-            self.actuators[id].set_connection_state(connectionState=connection_state)
+            self.actuators.get(id).connection_state = connection_state
+
+    @property
+    def sensors(self):
+        return self._sensors
 
     def add_sensor(self, id, name, channels):
         self.sensors[id] = SmappeeSensor(id, name, channels)
 
-    def get_sensors(self):
-        return self.sensors
+    @property
+    def measurements(self):
+        return self._measurements
 
     def add_measurement(self, id, name, type, subcircuitType, channels):
         self.measurements[id] = SmappeeMeasurement(id=id,
                                                    name=name,
                                                    type=type,
-                                                   subcircuitType=subcircuitType,
+                                                   subcircuit_type=subcircuitType,
                                                    channels=channels)
 
-    def get_measurements(self):
-        return self.measurements
+    @property
+    def smart_devices(self):
+        return self._smart_devices
 
     def add_smart_device(self, uuid, name, category, implementation, minCurrent, maxCurrent, measurements):
         self.smart_devices[uuid] = SmappeeSmartDevice(uuid=uuid,
@@ -278,48 +318,122 @@ class SmappeeServiceLocation(object):
                                                       maxCurrent=maxCurrent,
                                                       measurements=measurements)
 
-    def get_smart_devices(self):
-        return self.smart_devices
+    @property
+    def total_power(self):
+        return self._realtime_values.get('total_power')
+
+    @total_power.setter
+    def total_power(self, value):
+        self._realtime_values['total_power'] = value
+
+    @property
+    def total_reactive_power(self):
+        return self._realtime_values.get('total_reactive_power')
+
+    @total_reactive_power.setter
+    def total_reactive_power(self, value):
+        self._realtime_values['total_reactive_power'] = value
+
+    @property
+    def solar_power(self):
+        return self._realtime_values.get('solar_power')
+
+    @solar_power.setter
+    def solar_power(self, value):
+        self._realtime_values['solar_power'] = value
+
+    @property
+    def alwayson(self):
+        return self._realtime_values.get('alwayson')
+
+    @alwayson.setter
+    def alwayson(self, value):
+        self._realtime_values['alwayson'] = value
+
+    @property
+    def phase_voltages(self):
+        return self._realtime_values.get('phase_voltages')
+
+    @phase_voltages.setter
+    def phase_voltages(self, values):
+        self._realtime_values['phase_voltages'] = values
+
+    @property
+    def phase_voltages_h3(self):
+        return self._realtime_values.get('phase_voltages_h3')
+
+    @phase_voltages_h3.setter
+    def phase_voltages_h3(self, values):
+        self._realtime_values['phase_voltages_h3'] = values
+
+    @property
+    def phase_voltages_h5(self):
+        return self._realtime_values.get('phase_voltages_h5')
+
+    @phase_voltages_h5.setter
+    def phase_voltages_h5(self, values):
+        self._realtime_values['phase_voltages_h5'] = values
+
+    @property
+    def line_voltages(self):
+        return self._realtime_values.get('line_voltages')
+
+    @line_voltages.setter
+    def line_voltages(self, values):
+        self._realtime_values['line_voltages'] = values
+
+    @property
+    def line_voltages_h3(self):
+        return self._realtime_values.get('line_voltages_h3')
+
+    @line_voltages_h3.setter
+    def line_voltages_h3(self, values):
+        self._realtime_values['line_voltages_h3'] = values
+
+    @property
+    def line_voltages_h5(self):
+        return self._realtime_values.get('line_voltages_h5')
+
+    @line_voltages_h5.setter
+    def line_voltages_h5(self, values):
+        self._realtime_values['line_voltages_h5'] = values
 
     def load_mqtt_connection(self, kind):
         mqtt_connection = SmappeeMqtt(service_location=self,
-                                      service_location_id=self.service_location_id,
-                                      service_location_uuid=self.service_location_uuid,
-                                      device_serial_number=self.device_serial_number,
                                       kind=kind)
         mqtt_connection.start()
         return mqtt_connection
 
     def update_power_data(self, power_data):
         # use incoming power data (through central MQTT connection)
-        self.realtime_values['total_power'] = power_data['consumptionPower']
-        self.realtime_values['solar_power'] = power_data['solarPower']
-        self.realtime_values['alwayson'] = power_data['alwaysOn']
+        self.total_power = power_data.get('consumptionPower')
+        self.solar_power = power_data.get('solarPower')
+        self.alwayson = power_data.get('alwaysOn')
 
         if 'phaseVoltageData' in power_data:
-            self.realtime_values['phase_voltages'] = [pv / 10 for pv in power_data['phaseVoltageData']]
-            self.realtime_values['phase_voltages_h3'] = power_data['phaseVoltageH3Data']
-            self.realtime_values['phase_voltages_h5'] = power_data['phaseVoltageH5Data']
+            self.phase_voltages = [pv / 10 for pv in power_data.get('phaseVoltageData')]
+            self.phase_voltages_h3 = power_data.get('phaseVoltageH3Data')
+            self.phase_voltages_h5 = power_data.get('phaseVoltageH5Data')
 
         if 'lineVoltageData' in power_data:
-            self.realtime_values['line_voltages'] = [lv / 10 for lv in power_data['lineVoltageData']]
-            self.realtime_values['line_voltages_h3'] = power_data['lineVoltageH3Data']
-            self.realtime_values['line_voltages_h5'] = power_data['lineVoltageH5Data']
+            self.line_voltages = [lv / 10 for lv in power_data.get('lineVoltageData')]
+            self.line_voltages_h3 = power_data.get('lineVoltageH3Data')
+            self.line_voltages_h5 = power_data.get('lineVoltageH5Data')
 
         if 'activePowerData' in power_data:
-            active_power_data = power_data['activePowerData']
+            active_power_data = power_data.get('activePowerData')
+            for _, measurement in self.measurements.items():
+                measurement.update_active(active=active_power_data)
 
         if 'reactivePowerData' in power_data:
-            reactive_power_data = power_data['reactivePowerData']
+            reactive_power_data = power_data.get('reactivePowerData')
+            for _, measurement in self.measurements.items():
+                measurement.update_reactive(reactive=reactive_power_data)
 
         if 'currentData' in power_data:
-            current_data = power_data['currentData']
-
-        # update channel data
-        for id, measurement in self.measurements.items():
-            measurement.update_active(active=active_power_data)
-            measurement.update_reactive(reactive=reactive_power_data)
-            measurement.update_current(current=current_data)
+            current_data = power_data.get('currentData')
+            for _, measurement in self.measurements.items():
+                measurement.update_current(current=current_data)
 
         # update smart devices power
         # for uuid, smart_device in self.smart_devices.items():
@@ -329,19 +443,23 @@ class SmappeeServiceLocation(object):
 
     def update_realtime_data(self, realtime_data):
         # Use incoming realtime data (through local MQTT connection)
-        self.realtime_values['total_power'] = realtime_data['totalPower']
-        self.realtime_values['reactive_power'] = realtime_data['totalReactivePower']
-        self.realtime_values['phase_voltages'] = realtime_data['voltages']
+        self.total_power = realtime_data.get('totalPower')
+        self.reactive_power = realtime_data.get('totalReactivePower')
+        self.phase_voltages = realtime_data.get('voltages')
 
         active_power_data, current_data = {}, {}
-        for channel_power in realtime_data['channelPowers']:
-            active_power_data[channel_power['publishIndex']] = channel_power['power']
-            current_data[channel_power['publishIndex']] = channel_power['current'] / 10
+        for channel_power in realtime_data.get('channelPowers'):
+            active_power_data[channel_power.get('publishIndex')] = channel_power.get('power')
+            current_data[channel_power.get('publishIndex')] = channel_power.get('current') / 10
 
         # update channel data
-        for id, measurement in self.measurements.items():
+        for _, measurement in self.measurements.items():
             measurement.update_active(active=active_power_data, source='LOCAL')
             measurement.update_current(current=current_data, source='LOCAL')
+
+    @property
+    def aggregated_values(self):
+        return self._aggregated_values
 
     def update_active_consumptions(self, trend='today'):
         params = {
@@ -350,29 +468,29 @@ class SmappeeServiceLocation(object):
             'last_5_minutes': {'aggtype': 1, 'delta': 9}
         }
 
-        if f'total_consumption_{trend}' in self.cache:
+        if f'total_consumption_{trend}' in self._cache:
             return
 
         end = datetime.utcnow()
-        start = end - timedelta(minutes=params[trend]['delta'])
+        start = end - timedelta(minutes=params.get(trend).get('delta'))
 
         consumption_result = self.smappee_api.get_consumption(service_location_id=self.service_location_id,
                                                               start=start,
                                                               end=end,
-                                                              aggregation=params[trend]['aggtype'])
-        self.cache[f'total_consumption_{trend}'] = consumption_result
+                                                              aggregation=params.get(trend).get('aggtype'))
+        self._cache[f'total_consumption_{trend}'] = consumption_result
 
         if consumption_result['consumptions']:
-            self.aggregated_values[f'power_{trend}'] = consumption_result['consumptions'][0]['consumption']
-            self.aggregated_values[f'solar_{trend}'] = consumption_result['consumptions'][0]['solar']
-            self.aggregated_values[f'alwayson_{trend}'] = consumption_result['consumptions'][0]['alwaysOn'] * 12
+            self.aggregated_values[f'power_{trend}'] = consumption_result.get('consumptions')[0].get('consumption')
+            self.aggregated_values[f'solar_{trend}'] = consumption_result.get('consumptions')[0].get('solar')
+            self.aggregated_values[f'alwayson_{trend}'] = consumption_result.get('consumptions')[0].get('alwaysOn') * 12
 
     def update_todays_actuator_consumptions(self, aggtype=3, delta=1440):
         end = datetime.utcnow()
         start = end - timedelta(minutes=delta)
 
         for id, actuator in self.actuators.items():
-            if f'actuator_{id}_consumption_today' in self.cache:
+            if f'actuator_{id}_consumption_today' in self._cache:
                 continue
 
             consumption_result = self.smappee_api.get_switch_consumption(service_location_id=self.service_location_id,
@@ -380,17 +498,17 @@ class SmappeeServiceLocation(object):
                                                                          start=start,
                                                                          end=end,
                                                                          aggregation=aggtype)
-            self.cache[f'actuator_{id}_consumption_today'] = consumption_result
+            self._cache[f'actuator_{id}_consumption_today'] = consumption_result
 
             if consumption_result['records']:
-                actuator.set_consumption_today(consumption_today=consumption_result['records'][0]['active'])
+                actuator.consumption_today = consumption_result.get('records')[0].get('active')
 
     def update_todays_sensor_consumptions(self, aggtype=3, delta=1440):
         end = datetime.utcnow()
         start = end - timedelta(minutes=delta)
 
         for id, sensor in self.sensors.items():
-            if f'sensor_{id}_consumption_today' in self.cache:
+            if f'sensor_{id}_consumption_today' in self._cache:
                 continue
 
             consumption_result = self.smappee_api.get_sensor_consumption(service_location_id=self.service_location_id,
@@ -398,19 +516,19 @@ class SmappeeServiceLocation(object):
                                                                          start=start,
                                                                          end=end,
                                                                          aggregation=aggtype)
-            self.cache[f'sensor_{id}_consumption_today'] = consumption_result
+            self._cache[f'sensor_{id}_consumption_today'] = consumption_result
 
             if consumption_result['records']:
-                sensor.update_today_values(record=consumption_result['records'][0])
+                sensor.update_today_values(record=consumption_result.get('records')[0])
 
-                if 'temperature' in consumption_result['records'][0]:
-                    sensor.set_temperature(temperature=consumption_result['records'][0]['temperature'])
+                if 'temperature' in consumption_result.get('records')[0]:
+                    sensor.temperature = consumption_result.get('records')[0].get('temperature')
 
-                if 'humidity' in consumption_result['records'][0]:
-                    sensor.set_humidity(humidity=consumption_result['records'][0]['humidity'])
+                if 'humidity' in consumption_result.get('records')[0]:
+                    sensor.humidity = consumption_result.get('records')[0].get('humidity')
 
-                if 'battery' in consumption_result['records'][0]:
-                    sensor.set_battery(battery=consumption_result['records'][0]['battery'])
+                if 'battery' in consumption_result.get('records')[0]:
+                    sensor.battery = consumption_result.get('records')[0].get('battery')
 
     def update_trends_and_appliance_states(self, ):
         # update trend consumptions
@@ -421,6 +539,6 @@ class SmappeeServiceLocation(object):
         self.update_todays_actuator_consumptions()
 
         # update appliance states
-        for appliance_id, appliance in self.appliances.items():
+        for appliance_id, _ in self.appliances.items():
             self.update_appliance_state(id=appliance_id)
 

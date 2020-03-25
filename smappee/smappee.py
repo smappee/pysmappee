@@ -13,10 +13,10 @@ class Smappee(object):
         """
 
         # user credentials
-        self.username = username
-        self.password = password
-        self.client_id = client_id
-        self.client_secret = client_secret
+        self._username = username
+        self._password = password
+        self._client_id = client_id
+        self._client_secret = client_secret
 
         # shared api instance
         self.smappee_api = SmappeeApi(username=username,
@@ -25,29 +25,34 @@ class Smappee(object):
                                       client_secret=client_secret)
 
         # service locations accessible from user
-        self.service_locations = {}
+        self._service_locations = {}
 
     def load_service_locations(self, refresh=False):
         locations = self.smappee_api.get_service_locations()
         for service_location in locations['serviceLocations']:
             if 'deviceSerialNumber' in service_location:
-                if service_location['serviceLocationId'] in self.service_locations:
+                if service_location.get('serviceLocationId') in self._service_locations:
                     # refresh the configuration
-                    sl = self.service_locations[service_location['serviceLocationId']]
+                    sl = self.service_locations.get(service_location.get('serviceLocationId'))
                     sl.load_configuration(refresh=refresh)
                 else:
                     # Create service location object
-                    sl = SmappeeServiceLocation(service_location_id=service_location['serviceLocationId'],
-                                                service_location_uuid=service_location['serviceLocationUuid'],
-                                                name=service_location['name'],
-                                                device_serial_number=service_location['deviceSerialNumber'],
+                    sl = SmappeeServiceLocation(service_location_id=service_location.get('serviceLocationId'),
+                                                service_location_uuid=service_location.get('serviceLocationUuid'),
+                                                name=service_location.get('name'),
+                                                device_serial_number=service_location.get('deviceSerialNumber'),
                                                 smappee_api=self.smappee_api)
 
                     # Add sl object
-                    self.service_locations[service_location['serviceLocationId']] = sl
+                    self.service_locations[service_location.get('serviceLocationId')] = sl
 
-    def get_service_locations(self):
-        return self.service_locations
+    @property
+    def username(self):
+        return self._username
+
+    @property
+    def service_locations(self):
+        return self._service_locations
 
     def update_trends_and_appliance_states(self):
         for _, sl in self.service_locations.items():

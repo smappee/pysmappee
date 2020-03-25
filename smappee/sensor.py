@@ -2,32 +2,56 @@ class SmappeeSensor:
 
     def __init__(self, id, name, channels):
         # configuration details
-        self.id = id
-        self.name = name
+        self._id = id
+        self._name = name
 
         # list of dicts with keys name, ppu, uom, enabled, type (water/gas), channel (id)
-        self.channels = channels
+        self._channels = channels
         for c in self.channels:
             c['value_today'] = 0  # aggregated value
 
         # states
-        self.temperature = None
-        self.humidity = None
-        self.battery = None
+        self._temperature = None
+        self._humidity = None
+        self._battery = None
+
+    @property
+    def id(self):
+        return self._id
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def channels(self):
+        return self._channels
 
     def update_today_values(self, record):
-        for channel in self.channels:
-            channel['value_today'] = record[f"value{channel['channel']}"] / channel['ppu']
+        for channel in self._channels:
+            channel['value_today'] = record[f"value{channel.get('channel')}"] / channel.get('ppu')
 
-    def get_channels(self):
-        return self.channels
+    @property
+    def temperature(self):
+        return self._temperature
 
-    def set_temperature(self, temperature):
-        self.temperature = temperature
+    @temperature.setter
+    def temperature(self, temperature):
+        self._temperature = temperature
 
-    def set_humidity(self, humidity):
-        self.humidity = humidity
+    @property
+    def humidity(self):
+        return self._humidity
 
-    def set_battery(self, battery):
-        self.battery = battery
+    @humidity.setter
+    def humidity(self, humidity):
+        self._humidity = humidity
+
+    @property
+    def battery(self):
+        return self._battery
+
+    @battery.setter
+    def battery(self, battery):
+        self._battery = battery
 
