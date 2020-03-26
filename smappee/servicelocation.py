@@ -247,10 +247,10 @@ class SmappeeServiceLocation(object):
             self.appliances[id].power = power
             if 'state' in events[0]:
                 # program appliance
-                self.appliances[id].state = True if events[0].get('state') > 0 else False
+                self.appliances[id].state = events[0].get('state') > 0
             else:
                 # delta appliance
-                self.appliances[id].state = True if events[0].get('activePower') > 0 else False
+                self.appliances[id].state = events[0].get('activePower') > 0
 
     @property
     def actuators(self):
