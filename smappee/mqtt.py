@@ -96,11 +96,11 @@ class SmappeeMqtt(threading.Thread):
             # realtime central power values
             if message.topic == f'{self.topic_prefix}/power':
                 power_data = json.loads(message.payload)
-                self._service_location.update_power_data(power_data=power_data)
+                self._service_location._update_power_data(power_data=power_data)
             # realtime local power values
             elif message.topic == f'{self.topic_prefix}/realtime':
                 realtime_data = json.loads(message.payload)
-                self._service_location.update_realtime_data(realtime_data=realtime_data)
+                self._service_location._update_realtime_data(realtime_data=realtime_data)
             # powerquality
             elif message.topic == f'{self.topic_prefix}/powerquality':
                 pass
@@ -156,7 +156,7 @@ class SmappeeMqtt(threading.Thread):
                 if message.topic.endswith('/devices'):
                     devices = json.loads(message.payload)
                     for device in devices:
-                        self._service_location.add_smart_device(
+                        self._service_location._add_smart_device(
                             uuid=device.get('uuid'),
                             name=device.get('name'),
                             category=device.get('category'),

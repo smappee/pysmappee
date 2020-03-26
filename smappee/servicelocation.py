@@ -92,23 +92,23 @@ class SmappeeServiceLocation(object):
 
         # Load appliances
         for appliance in sl_metering_configuration.get('appliances'):
-            self.add_appliance(id=appliance.get('id'),
-                               name=appliance.get('name'),
-                               type=appliance.get('type'))
+            self._add_appliance(id=appliance.get('id'),
+                                name=appliance.get('name'),
+                                type=appliance.get('type'))
 
         # Load actuators (Smappee Switches, Comfort Plugs, IO modules)
         for actuator in sl_metering_configuration.get('actuators'):
-            self.add_actuator(id=actuator.get('id'),
-                              name=actuator.get('name'),
-                              serialnumber=actuator.get('serialNumber') if 'serialNumber' in actuator else None,
-                              state_values=actuator.get('states'),
-                              actuator_type=actuator.get('type'))
+            self._add_actuator(id=actuator.get('id'),
+                               name=actuator.get('name'),
+                               serialnumber=actuator.get('serialNumber') if 'serialNumber' in actuator else None,
+                               state_values=actuator.get('states'),
+                               actuator_type=actuator.get('type'))
 
         # Load sensors (Smappee Gas and Water)
         for sensor in sl_metering_configuration.get('sensors'):
-            self.add_sensor(id=sensor.get('id'),
-                            name=sensor.get('name'),
-                            channels=sensor.get('channels'))
+            self._add_sensor(id=sensor.get('id'),
+                             name=sensor.get('name'),
+                             channels=sensor.get('channels'))
 
         # Set phase type
         self.phase_type = sl_metering_configuration.get('phaseType') if 'phaseType' in sl_metering_configuration else None
@@ -116,11 +116,11 @@ class SmappeeServiceLocation(object):
         # Load channel configuration
         if 'measurements' in sl_metering_configuration:
             for measurement in sl_metering_configuration.get('measurements'):
-                self.add_measurement(id=measurement.get('id'),
-                                     name=measurement.get('name'),
-                                     type=measurement.get('type'),
-                                     subcircuitType=measurement.get('subcircuitType') if 'subcircuitType' in measurement else None,
-                                     channels=measurement.get('channels'))
+                self._add_measurement(id=measurement.get('id'),
+                                      name=measurement.get('name'),
+                                      type=measurement.get('type'),
+                                      subcircuitType=measurement.get('subcircuitType') if 'subcircuitType' in measurement else None,
+                                      channels=measurement.get('channels'))
 
                 if measurement.get('type') == 'PRODUCTION':
                     self.has_solar_production = True
@@ -225,7 +225,7 @@ class SmappeeServiceLocation(object):
     def appliances(self):
         return self._appliances
 
-    def add_appliance(self, id, name, type):
+    def _add_appliance(self, id, name, type):
         self.appliances[id] = SmappeeAppliance(id=id,
                                                name=name,
                                                type=type)
@@ -256,7 +256,7 @@ class SmappeeServiceLocation(object):
     def actuators(self):
         return self._actuators
 
-    def add_actuator(self, id, name, serialnumber, state_values, actuator_type):
+    def _add_actuator(self, id, name, serialnumber, state_values, actuator_type):
         type_mapping = {
             'CCD_CHACON_SIMPLE': 'PLUG',
             'CCD_ELRO_SIMPLE': 'PLUG',
@@ -291,14 +291,14 @@ class SmappeeServiceLocation(object):
     def sensors(self):
         return self._sensors
 
-    def add_sensor(self, id, name, channels):
+    def _add_sensor(self, id, name, channels):
         self.sensors[id] = SmappeeSensor(id, name, channels)
 
     @property
     def measurements(self):
         return self._measurements
 
-    def add_measurement(self, id, name, type, subcircuitType, channels):
+    def _add_measurement(self, id, name, type, subcircuitType, channels):
         self.measurements[id] = SmappeeMeasurement(id=id,
                                                    name=name,
                                                    type=type,
@@ -309,7 +309,7 @@ class SmappeeServiceLocation(object):
     def smart_devices(self):
         return self._smart_devices
 
-    def add_smart_device(self, uuid, name, category, implementation, minCurrent, maxCurrent, measurements):
+    def _add_smart_device(self, uuid, name, category, implementation, minCurrent, maxCurrent, measurements):
         self.smart_devices[uuid] = SmappeeSmartDevice(uuid=uuid,
                                                       name=name,
                                                       category=category,
@@ -404,7 +404,7 @@ class SmappeeServiceLocation(object):
         mqtt_connection.start()
         return mqtt_connection
 
-    def update_power_data(self, power_data):
+    def _update_power_data(self, power_data):
         # use incoming power data (through central MQTT connection)
         self.total_power = power_data.get('consumptionPower')
         self.solar_power = power_data.get('solarPower')
@@ -441,7 +441,7 @@ class SmappeeServiceLocation(object):
         #     smart_device.update_reactive(reactive=reactive_power_data)
         #     smart_device.update_current(current=current_data)
 
-    def update_realtime_data(self, realtime_data):
+    def _update_realtime_data(self, realtime_data):
         # Use incoming realtime data (through local MQTT connection)
         self.total_power = realtime_data.get('totalPower')
         self.reactive_power = realtime_data.get('totalReactivePower')
