@@ -21,8 +21,6 @@ The authentication mechanism is based on oauth2 specification,
 for more information on the oauth2 spec see [http://oauth.net/documentation](http://oauth.net/documentation).
 We need to register our application with Smappee by contacting [info@smappee.com](mailto:info@smappee.com).
 
-
-### Smappee
 When we registered our application we got a `client_id` and `client_secret`.
 Together with our Smappee `username` and `password` we can create an instance of the Smappee class which automatically creates and API instance.
 
@@ -36,9 +34,14 @@ All details are iteratively saved into the `service_locations` property.
 
 ```python
 smappee.load_configuration()
-smappee.service_locations  # dictionary holding all shared service locations instances
+smappee.service_locations  # dictionary holding all shared service location instances
 ```
 
+Examples / Quickstart
+--------------------
+
+Structure
+---------
 ### Service location
 A service location instance holds
 * Service location id
@@ -135,7 +138,7 @@ sl.line_voltages_h5
 ```
 
 ### Aggregated values
-A predefined set of aggregated energy values are being saved in the `servic_location` class. Reloading these values can
+A predefined set of aggregated energy values are being saved in the `service_location` class. Reloading these values can
 be done by using the `update_trends_and_appliance_states` method
 ```python
 sl = smappee.service_locations.get(12345) # where 12345 should be the correct service location id
