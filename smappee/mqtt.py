@@ -19,6 +19,7 @@ mqtt_config = dict({
 
 tracking_interval = 60 * 5
 heartbeat_interval = 60 * 1
+discovery = False
 
 
 def tracking(func):
@@ -191,10 +192,8 @@ class SmappeeMqtt(threading.Thread):
                 elif message.topic.endswith('/property/chargingstate'):
                     pass
 
-                else:
-                    print()
+                elif discovery:
                     print(message.topic, message.payload)
-                    print()
 
             # specific HASS.io topics
             elif message.topic == f'{self.topic_prefix}/homeassistant/event':
@@ -222,12 +221,9 @@ class SmappeeMqtt(threading.Thread):
                     self._service_location.set_actuator_connection_state(id=plug_id,
                                                                          connection_state=plug_state,
                                                                          since=plug_state_since)
-            else:
-                print()
+            elif discovery:
                 print(message.topic, message.payload)
-                print()
         except Exception as e:
-            print('Exception', e)
             traceback.print_exc()
 
     def start(self):
