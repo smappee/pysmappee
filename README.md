@@ -10,7 +10,7 @@ Version
 
 Installation
 ------------
-The recommended way to install is via `pip <https://pypi.org/>`_ (comming soon)
+The recommended way to install is via [pip](https://pypi.org/) (comming soon)
 
     $ pip3 install pysmappee
 
@@ -18,8 +18,8 @@ Getting Started
 ---------------
 Before we can use PySmappee, we need to be authenticated to the Smappee cloud.
 The authentication mechanism is based on oauth2 specification,
-for more information on the oauth2 spec see `http://oauth.net/documentation`.
-We need to register our application with Smappee by contacting `info@smappee.com <mailto:info@smappee.com>`_.
+for more information on the oauth2 spec see [http://oauth.net/documentation](http://oauth.net/documentation).
+We need to register our application with Smappee by contacting [info@smappee.com](mailto:info@smappee.com).
 
 
 ### Smappee
