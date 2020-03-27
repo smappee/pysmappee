@@ -1,9 +1,10 @@
 class SmappeeAppliance:
 
-    def __init__(self, id, name, type):
+    def __init__(self, id, name, type, source_type):
         self._id = id
         self._name = name
         self._type = type
+        self._source_type = source_type
         self._state = False
         self._power = None
 
@@ -18,6 +19,10 @@ class SmappeeAppliance:
     @property
     def type(self):
         return self._type
+
+    @property
+    def source_type(self):
+        return self._source_type
 
     @property
     def state(self):

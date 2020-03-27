@@ -94,7 +94,8 @@ class SmappeeServiceLocation(object):
         for appliance in sl_metering_configuration.get('appliances'):
             self._add_appliance(id=appliance.get('id'),
                                 name=appliance.get('name'),
-                                type=appliance.get('type'))
+                                type=appliance.get('type'),
+                                source_type=appliance.get('sourceType'))
 
         # Load actuators (Smappee Switches, Comfort Plugs, IO modules)
         for actuator in sl_metering_configuration.get('actuators'):
@@ -225,10 +226,11 @@ class SmappeeServiceLocation(object):
     def appliances(self):
         return self._appliances
 
-    def _add_appliance(self, id, name, type):
+    def _add_appliance(self, id, name, type, source_type):
         self.appliances[id] = SmappeeAppliance(id=id,
                                                name=name,
-                                               type=type)
+                                               type=type,
+                                               source_type=source_type)
 
     def update_appliance_state(self, id, delta=1440):
         if f"appliance_{id}" in self._cache:
