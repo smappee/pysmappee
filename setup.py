@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="bsmappee",
+    name="pysmappee",
     version="0.0.1",
     author="Smappee",
     author_email="support@smappee.com",
