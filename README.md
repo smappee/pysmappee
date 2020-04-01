@@ -62,13 +62,14 @@ A service location instance holds
 * Some predefined aggregated values
 
 ### Appliances
-An appliance instance holds the appliance id, name and type
+An appliance instance holds the appliance id, name, type and source type (NILM or CT appliance)
 ```python
 appl = smappee.service_locations.get(12345).appliances  # where 12345 should be the correct servie location id
 for appliance_id, appliance in appl.items():
     appliance.id
     appliance.name
     appliance.type
+    appliance.source_type
 ```
 
 ### Actuators
