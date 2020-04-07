@@ -6,11 +6,11 @@ Python Library for the Smappee dev API (v3) and MQTT interface.
 Version
 -------
 
-0.0.1
+0.0.2
 
 Installation
 ------------
-The recommended way to install is via [pip](https://pypi.org/) (comming soon)
+The recommended way to install is via [pip](https://pypi.org/)
 
     $ pip3 install pysmappee
 
@@ -161,6 +161,9 @@ Changelog
 ---------
 0.0.1
 * Initial commit
+
+0.0.2
+* Rename smappee directory
 
 Support
 -------
