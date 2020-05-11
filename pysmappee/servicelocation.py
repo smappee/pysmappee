@@ -259,18 +259,11 @@ class SmappeeServiceLocation(object):
         return self._actuators
 
     def _add_actuator(self, id, name, serialnumber, state_values, actuator_type):
-        type_mapping = {
-            'CCD_CHACON_SIMPLE': 'PLUG',
-            'CCD_ELRO_SIMPLE': 'PLUG',
-            'CCD_HE_ADVANCED': 'PLUG',
-            'CCD_LEAF_LITE': 'SWITCH',
-            'INFINITY_OUTPUT_MODULE': 'OUTPUT_MODULE',
-        }
         self.actuators[id] = SmappeeActuator(id=id,
                                              name=name,
                                              serialnumber=serialnumber,
                                              state_values=state_values,
-                                             type=type_mapping.get(actuator_type))
+                                             type=actuator_type)
 
         # Get actuator state
         state = self.smappee_api.get_actuator_state(service_location_id=self.service_location_id,
