@@ -92,10 +92,12 @@ class SmappeeServiceLocation(object):
 
         # Load appliances
         for appliance in sl_metering_configuration.get('appliances'):
-            self._add_appliance(id=appliance.get('id'),
-                                name=appliance.get('name'),
-                                type=appliance.get('type'),
-                                source_type=appliance.get('sourceType'))
+            if not (appliance.get('type') == 'Find me'
+                    and appliance.get('sourceType') == 'NILM'):
+                self._add_appliance(id=appliance.get('id'),
+                                    name=appliance.get('name'),
+                                    type=appliance.get('type'),
+                                    source_type=appliance.get('sourceType'))
 
         # Load actuators (Smappee Switches, Comfort Plugs, IO modules)
         for actuator in sl_metering_configuration.get('actuators'):
