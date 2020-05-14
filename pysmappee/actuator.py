@@ -1,6 +1,6 @@
 class SmappeeActuator:
 
-    def __init__(self, id, name, serialnumber, state_values, type):
+    def __init__(self, id, name, serialnumber, state_values, connection_state, type):
         # configuration details
         self._id = id
         self._name = name
@@ -8,8 +8,8 @@ class SmappeeActuator:
         self._state_values = state_values
         self._type = type
 
-        # states (only for Smappee Switch)
-        self._connection_state = None
+        # states
+        self._connection_state = connection_state
         self._state = None
 
         # extract current state and possible values from state_values

@@ -159,6 +159,13 @@ class SmappeeApi(object):
         r.raise_for_status()
         return r
 
+    @authenticated
+    def get_actuator_connection_state(self, service_location_id, actuator_id):
+        url = urljoin(self.servicelocation_url, service_location_id, "actuator", actuator_id, "connectionState")
+        r = requests.get(url, headers=self.headers)
+        r.raise_for_status()
+        return r.text
+
     def _to_milliseconds(self, time):
         if isinstance(time, dt.datetime):
             if time.tzinfo is None:

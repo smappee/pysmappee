@@ -105,7 +105,8 @@ class SmappeeServiceLocation(object):
                                name=actuator.get('name'),
                                serialnumber=actuator.get('serialNumber') if 'serialNumber' in actuator else None,
                                state_values=actuator.get('states'),
-                               actuator_type=actuator.get('type'))
+                               connection_state=actuator.get('connectionState'),
+                               actuator_type=actuator.get('type'),)
 
         # Load sensors (Smappee Gas and Water)
         for sensor in sl_metering_configuration.get('sensors'):
@@ -260,17 +261,23 @@ class SmappeeServiceLocation(object):
     def actuators(self):
         return self._actuators
 
-    def _add_actuator(self, id, name, serialnumber, state_values, actuator_type):
+    def _add_actuator(self, id, name, serialnumber, state_values, connection_state, actuator_type):
         self.actuators[id] = SmappeeActuator(id=id,
                                              name=name,
                                              serialnumber=serialnumber,
                                              state_values=state_values,
+                                             connection_state=connection_state,
                                              type=actuator_type)
 
         # Get actuator state
         state = self.smappee_api.get_actuator_state(service_location_id=self.service_location_id,
                                                     actuator_id=id)
         self.actuators.get(id).state = state
+
+        # Get actuator connection state
+        connection_state = self.smappee_api.get_actuator_connection_state(service_location_id=self.service_location_id,
+                                                                          actuator_id=id)
+        self.actuators.get(id).connection_state = connection_state
 
     def set_actuator_state(self, id, state, since=None, api=True):
         if id in self.actuators:
