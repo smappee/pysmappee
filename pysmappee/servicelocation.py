@@ -92,8 +92,7 @@ class SmappeeServiceLocation(object):
 
         # Load appliances
         for appliance in sl_metering_configuration.get('appliances'):
-            if not (appliance.get('type') == 'Find me'
-                    and appliance.get('sourceType') == 'NILM'):
+            if appliance.get('type') != 'Find me' and appliance.get('sourceType') == 'NILM':
                 self._add_appliance(id=appliance.get('id'),
                                     name=appliance.get('name'),
                                     type=appliance.get('type'),
