@@ -159,7 +159,7 @@ class SmappeeApi(object):
 
     @authenticated
     def get_actuator_connection_state(self, service_location_id, actuator_id):
-        url = urljoin(config['API_URL'][self._farm]['servicelocation_url'], service_location_id, "actuator", actuator_id, "connectionState")
+        url = urljoin(config['API_URL'][self._farm]['servicelocation_url'], service_location_id, "actuator", actuator_id, "connectionstate")
         r = requests.get(url, headers=self.headers)
         r.raise_for_status()
         return r.text
