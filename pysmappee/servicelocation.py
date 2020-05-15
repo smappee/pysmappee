@@ -10,7 +10,7 @@ from cachetools import TTLCache
 
 class SmappeeServiceLocation(object):
 
-    def __init__(self, service_location_id, service_location_uuid, name, device_serial_number, smappee_api):
+    def __init__(self, service_location_id, service_location_uuid, name, device_serial_number, smappee_api, farm):
         # service location details
         self._service_location_id = service_location_id
         self._service_location_uuid = service_location_uuid
@@ -22,6 +22,7 @@ class SmappeeServiceLocation(object):
 
         # api instance to (re)load consumption data
         self.smappee_api = smappee_api
+        self._farm = farm
 
         # mqtt connections
         self.mqtt_connection_central = None
@@ -105,7 +106,7 @@ class SmappeeServiceLocation(object):
                                serialnumber=actuator.get('serialNumber') if 'serialNumber' in actuator else None,
                                state_values=actuator.get('states'),
                                connection_state=actuator.get('connectionState'),
-                               actuator_type=actuator.get('type'),)
+                               actuator_type=actuator.get('type'))
 
         # Load sensors (Smappee Gas and Water)
         for sensor in sl_metering_configuration.get('sensors'):
@@ -403,7 +404,8 @@ class SmappeeServiceLocation(object):
 
     def load_mqtt_connection(self, kind):
         mqtt_connection = SmappeeMqtt(service_location=self,
-                                      kind=kind)
+                                      kind=kind,
+                                      farm=self._farm)
         mqtt_connection.start()
         return mqtt_connection
 

@@ -5,21 +5,11 @@ import time
 import socket
 import traceback
 from functools import wraps
+from .config import config
 
-
-mqtt_config = dict({
-    'central': {
-        'host':  '52.51.163.167',
-        'port': 80
-    },
-    'local': {  # only accessible from same network
-        'port': 1883,
-    },
-})
 
 tracking_interval = 60 * 5
 heartbeat_interval = 60 * 1
-discovery = False
 
 
 def tracking(func):
@@ -37,10 +27,11 @@ def tracking(func):
 
 class SmappeeMqtt(threading.Thread):
 
-    def __init__(self, service_location, kind):
+    def __init__(self, service_location, kind, farm):
         self._client = None
         self._service_location = service_location
         self._kind = kind
+        self._farm = farm
         self._last_tracking = 0
         self._last_heartbeat = 0
         threading.Thread.__init__(self, name=f'SmappeeMqttListener_{self._service_location.service_location_uuid}')
@@ -221,7 +212,7 @@ class SmappeeMqtt(threading.Thread):
                     self._service_location.set_actuator_connection_state(id=plug_id,
                                                                          connection_state=plug_state,
                                                                          since=plug_state_since)
-            elif discovery:
+            elif config['MQTT']['discovery']:
                 print(message.topic, message.payload)
         except Exception as e:
             traceback.print_exc()
@@ -236,12 +227,12 @@ class SmappeeMqtt(threading.Thread):
 
         #  self._client.tls_set(None, cert_reqs=ssl.CERT_NONE, tls_version=ssl.PROTOCOL_TLSv1)
         if self._kind == 'central':
-            self._client.connect(host=mqtt_config[self._kind]['host'],
-                                 port=mqtt_config[self._kind]['port'])
+            self._client.connect(host=config['MQTT'][self._farm]['host'],
+                                 port=config['MQTT'][self._farm]['port'])
         elif self._kind == 'local':
             try:
                 self._client.connect(host=f'smappee{self._service_location.device_serial_number}.local',
-                                     port=mqtt_config['local']['port'])
+                                     port=config['MQTT']['local']['port'])
             except socket.gaierror as _:
                 # unable to connect to local Smappee device
                 return

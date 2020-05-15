@@ -4,12 +4,13 @@ from .servicelocation import SmappeeServiceLocation
 
 class Smappee(object):
 
-    def __init__(self, username, password, client_id, client_secret):
+    def __init__(self, username, password, client_id, client_secret, platform='PRODUCTION'):
         """
         :param username:
         :param password:
         :param client_id:
         :param client_secret:
+        :param platform: default 'PRODUCTION'
         """
 
         # user credentials
@@ -18,11 +19,21 @@ class Smappee(object):
         self._client_id = client_id
         self._client_secret = client_secret
 
+        # convert platform to farm
+        self._platform = platform
+        platform_to_farm = {
+            'PRODUCTION': 1,
+            'ACCEPTANCE': 2,
+            'DEVELOPMENT': 3,
+        }
+        self._farm = platform_to_farm[self._platform]
+
         # shared api instance
         self.smappee_api = SmappeeApi(username=username,
                                       password=password,
                                       client_id=client_id,
-                                      client_secret=client_secret)
+                                      client_secret=client_secret,
+                                      farm=self._farm)
 
         # service locations accessible from user
         self._service_locations = {}
@@ -41,7 +52,8 @@ class Smappee(object):
                                                 service_location_uuid=service_location.get('serviceLocationUuid'),
                                                 name=service_location.get('name'),
                                                 device_serial_number=service_location.get('deviceSerialNumber'),
-                                                smappee_api=self.smappee_api)
+                                                smappee_api=self.smappee_api,
+                                                farm=self._farm)
 
                     # Add sl object
                     self.service_locations[service_location.get('serviceLocationId')] = sl
