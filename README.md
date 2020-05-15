@@ -6,7 +6,7 @@ Python Library for the Smappee dev API (v3) and MQTT interface.
 Version
 -------
 
-0.0.4
+0.0.5
 
 Installation
 ------------
@@ -168,7 +168,7 @@ Changelog
 0.0.3
 * Sync dev API
 
-0.0.4
+0.0.4 - 0.0.5
 * Actuator connection state
 * Platform option
 
