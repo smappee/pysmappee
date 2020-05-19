@@ -10,11 +10,9 @@ from cachetools import TTLCache
 
 class SmappeeServiceLocation(object):
 
-    def __init__(self, service_location_id, service_location_uuid, name, device_serial_number, smappee_api, farm):
+    def __init__(self, service_location_id, device_serial_number, smappee_api, farm):
         # service location details
         self._service_location_id = service_location_id
-        self._service_location_uuid = service_location_uuid
-        self._service_location_name = name
         self._device_serial_number = device_serial_number
         self._phase_type = None
         self._has_solar_production = False
@@ -84,7 +82,8 @@ class SmappeeServiceLocation(object):
         sl_metering_configuration = self.smappee_api.get_metering_configuration(service_location_id=self.service_location_id)
 
         # Service location details
-        self.service_location_name = sl_metering_configuration.get('name')
+        self._service_location_name = sl_metering_configuration.get('name')
+        self._service_location_uuid = sl_metering_configuration.get('serviceLocationUuid')
 
         # Set coordinates and timezone
         self.latitude = sl_metering_configuration.get('lat')

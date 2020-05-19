@@ -49,8 +49,6 @@ class Smappee(object):
                 else:
                     # Create service location object
                     sl = SmappeeServiceLocation(service_location_id=service_location.get('serviceLocationId'),
-                                                service_location_uuid=service_location.get('serviceLocationUuid'),
-                                                name=service_location.get('name'),
                                                 device_serial_number=service_location.get('deviceSerialNumber'),
                                                 smappee_api=self.smappee_api,
                                                 farm=self._farm)
