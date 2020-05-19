@@ -43,25 +43,31 @@ class SmappeeMeasurement:
         return self._active_total
 
     def update_active(self, active, source='CENTRAL'):
+        index = 'powerTopicIndex' if source == 'CENTRAL' else 'consumptionIndex'
         for c in self.channels:
-            c['active'] = active[c.get('powerTopicIndex' if source == 'CENTRAL' else 'consumptionIndex')]
-        self._active_total = sum([c.get('active') for c in self.channels])
+            if index in c:
+                c['active'] = active[c.get(index)]
+        self._active_total = sum([c.get('active') for c in self.channels if index in c])
 
     @property
     def reactive_total(self):
         return self._reactive_total
 
     def update_reactive(self, reactive, source='CENTRAL'):
+        index = 'powerTopicIndex' if source == 'CENTRAL' else 'consumptionIndex'
         for c in self.channels:
-            c['reactive'] = reactive[c.get('powerTopicIndex' if source == 'CENTRAL' else 'consumptionIndex')]
-        self._reactive_total = sum([c.get('reactive') for c in self.channels])
+            if index in c:
+                c['reactive'] = reactive[c.get(index)]
+        self._reactive_total = sum([c.get('reactive') for c in self.channels if index in c])
 
     @property
     def current_total(self):
         return self._current_total
 
     def update_current(self, current, source='CENTRAL'):
+        index = 'powerTopicIndex' if source == 'CENTRAL' else 'consumptionIndex'
         for c in self.channels:
-            c['current'] = current[c.get('powerTopicIndex' if source == 'CENTRAL' else 'consumptionIndex')]
-        self._current_total = sum([c.get('current') for c in self.channels])
+            if index in c:
+                c['current'] = current[c.get(index)]
+        self._current_total = sum([c.get('current') for c in self.channels if index in c])
 
