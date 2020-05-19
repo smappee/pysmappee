@@ -168,9 +168,11 @@ Changelog
 0.0.3
 * Sync dev API
 
-0.0.4 - 0.0.5
+0.0.{4, 5, 6}
 * Actuator connection state
 * Platform option
+* Measurement index check
+* Location details source change
 
 Support
 -------
