@@ -141,7 +141,17 @@ class SmappeeMqtt(threading.Thread):
 
             # controllable nodes (general messages)
             elif message.topic == f'{self.topic_prefix}':
-                pass
+                msg = json.loads(message.payload)
+
+                # turn ON/OFF comfort plug
+                if msg.get('messageType') == 1283:
+                    id = msg['content']['controllableNodeId']
+                    plug_state = msg['content']['action']
+                    plug_state_since = int(msg['content']['timestamp'] / 1000)
+                    self._service_location.set_actuator_state(id=id,
+                                                              state=plug_state,
+                                                              since=plug_state_since,
+                                                              api=False)
 
             # smart device and ETC topics
             elif message.topic.startswith(f'{self.topic_prefix}/etc/'):
