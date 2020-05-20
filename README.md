@@ -174,6 +174,10 @@ Changelog
 * Measurement index check
 * Location details source change
 
+0.0.7
+* Support comfort plug state change
+* Add locations without active device
+
 Support
 -------
 If you find a bug, have any questions about how to use PySmappee or have suggestions for improvements then feel free to 
