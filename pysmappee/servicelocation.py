@@ -163,7 +163,9 @@ class SmappeeServiceLocation(object):
             '51': 'Connect',
             '57': 'P1S1 module',
         }
-        if self.device_serial_number[:2] in model_mapping:
+        if self.device_serial_number is None:
+            return 'Smappee deactivated'
+        elif self.device_serial_number[:2] in model_mapping:
             return f'Smappee {model_mapping[self.device_serial_number[:2]]}'
         else:
             'Smappee'
