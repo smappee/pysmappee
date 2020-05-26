@@ -6,7 +6,7 @@ Python Library for the Smappee dev API (v3) and MQTT interface.
 Version
 -------
 
-0.0.5
+0.0.8
 
 Installation
 ------------
@@ -174,7 +174,7 @@ Changelog
 * Measurement index check
 * Location details source change
 
-0.0.7
+0.0.{7, 8}
 * Support comfort plug state change
 * Add locations without active device
 
