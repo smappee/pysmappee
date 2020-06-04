@@ -26,7 +26,7 @@ config['MQTT'] = {
         'port': 10000,
     },
     3: {
-        'host': 'mqtttest.smappee.net',
+        'host': 'mqttdev.smappee.net',
         'port': 10000,
     },
     'local': {  # only accessible from same network
