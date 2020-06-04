@@ -278,9 +278,10 @@ class SmappeeServiceLocation(object):
                                                     actuator_id=id)
         self.actuators.get(id).state = state
 
-        # Get actuator connection state
+        # Get actuator connection state (COMFORT_PLUG is always UNREACHABLE)
         connection_state = self.smappee_api.get_actuator_connection_state(service_location_id=self.service_location_id,
                                                                           actuator_id=id)
+        connection_state = connection_state.replace('"', '')
         self.actuators.get(id).connection_state = connection_state
 
     def set_actuator_state(self, id, state, since=None, api=True):
