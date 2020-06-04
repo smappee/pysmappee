@@ -100,6 +100,9 @@ class SmappeeServiceLocation(object):
 
         # Load actuators (Smappee Switches, Comfort Plugs, IO modules)
         for actuator in sl_metering_configuration.get('actuators'):
+            # temp disable IO modules until 1.6.0 release
+            if actuator.get('type') == 'INFINITY_OUTPUT_MODULE':
+                continue
             self._add_actuator(id=actuator.get('id'),
                                name=actuator.get('name'),
                                serialnumber=actuator.get('serialNumber') if 'serialNumber' in actuator else None,
