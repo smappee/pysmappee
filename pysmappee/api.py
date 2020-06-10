@@ -3,6 +3,9 @@ import datetime as dt
 import functools
 from .config import config
 from .helper import urljoin
+from oauthlib.oauth2 import TokenExpiredError
+from requests import Response
+from requests_oauthlib import OAuth2Session
 import pytz
 import numbers
 
@@ -12,56 +15,43 @@ def authenticated(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         self = args[0]
-        if self._refresh_token is not None and self._token_expiration_time <= dt.datetime.utcnow():
-            self.authenticate(refresh=True)
-        return func(*args, **kwargs)
+        try:
+            return func(*args, **kwargs)
+        except TokenExpiredError:
+            self._oauth.token = self.refresh_tokens()
+            return func(*args, **kwargs)
     return wrapper
 
 
 class SmappeeApi(object):
 
-    def __init__(self, username, password, client_id, client_secret, farm):
-        self._username = username
-        self._password = password
+    def __init__(
+            self,
+            client_id,
+            client_secret,
+            redirect_uri=None,
+            token=None,
+            token_updater=None,
+            farm=1
+    ):
         self._client_id = client_id
         self._client_secret = client_secret
+        self._token_updater = token_updater
         self._farm = farm
-        self._access_token = None
-        self._refresh_token = None
-        self._token_expiration_time = None
 
-        self.authenticate()
+        extra = {"client_id": self._client_id, "client_secret": self._client_secret}
+
+        self._oauth = OAuth2Session(
+            client_id=client_id,
+            token=token,
+            redirect_uri=redirect_uri,
+            auto_refresh_kwargs=extra,
+            token_updater=token_updater,
+        )
 
     @property
     def headers(self):
-        return {"Authorization": f"Bearer {self._access_token}"}
-
-    def authenticate(self, refresh=False):
-        data = {
-            "grant_type": "refresh_token" if refresh else "password",
-            "client_id": self._client_id,
-            "client_secret": self._client_secret,
-        }
-
-        if refresh:
-            data["refresh_token"] = self._refresh_token
-        else:
-            data["username"] = self._username
-            data["password"] = self._password
-
-        r = requests.post(config['API_URL'][self._farm]['token_url'], data=data)
-        r.raise_for_status()
-        j = r.json()
-        self._access_token = j['access_token']
-        self._refresh_token = j['refresh_token']
-        self._set_token_expiration_time(expires_in=j['expires_in'])
-        return r
-
-    def _set_token_expiration_time(self, expires_in):
-        """
-        Saves the token expiration time by adding the 'expires in' parameter to the current datetime (in utc).
-        """
-        self._token_expiration_time = dt.datetime.utcnow() + dt.timedelta(0, expires_in)  # timedelta(days, seconds)
+        return {"Authorization": f"Bearer {self._oauth.access_token}"}
 
     @authenticated
     def get_service_locations(self):
@@ -174,3 +164,22 @@ class SmappeeApi(object):
         else:
             raise NotImplementedError("Time format not supported. Use milliseconds since epoch,\
                                         Datetime or Pandas Datetime")
+
+    def get_authorization_url(self, state):
+        return self._oauth.authorization_url(config['API_URL'][self._farm]['authorize_url'], state)
+
+    def request_token(self, authorization_response, code):
+        return self._oauth.fetch_token(
+            token_url=config['API_URL'][self._farm]['token_url'],
+            authorization_response=authorization_response,
+            code=code,
+            client_secret=self.client_secret,
+        )
+
+    def refresh_tokens(self):
+        token = self._oauth.refresh_token(token_url=config['API_URL'][self._farm]['token_url'])
+
+        if self.token_updater is not None:
+            self.token_updater(token)
+
+        return token

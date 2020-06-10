@@ -4,20 +4,11 @@ from .servicelocation import SmappeeServiceLocation
 
 class Smappee(object):
 
-    def __init__(self, username, password, client_id, client_secret, platform='PRODUCTION'):
+    def __init__(self, api, platform='PRODUCTION'):
         """
-        :param username:
-        :param password:
-        :param client_id:
-        :param client_secret:
+        :param api:
         :param platform: default 'PRODUCTION'
         """
-
-        # user credentials
-        self._username = username
-        self._password = password
-        self._client_id = client_id
-        self._client_secret = client_secret
 
         # convert platform to farm
         self._platform = platform
@@ -29,11 +20,7 @@ class Smappee(object):
         self._farm = platform_to_farm[self._platform]
 
         # shared api instance
-        self.smappee_api = SmappeeApi(username=username,
-                                      password=password,
-                                      client_id=client_id,
-                                      client_secret=client_secret,
-                                      farm=self._farm)
+        self.smappee_api = api
 
         # service locations accessible from user
         self._service_locations = {}

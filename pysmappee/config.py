@@ -3,6 +3,7 @@ config = dict()
 # api base urls
 config['API_URL'] = {
     1: {
+        'authorize_url': 'https://app1pub.smappee.net/dev/v1/oauth2/authorize',
         'token_url': 'https://app1pub.smappee.net/dev/v3/oauth2/token',
         'servicelocation_url': 'https://app1pub.smappee.net/dev/v3/servicelocation',
     },
