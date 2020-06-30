@@ -4,7 +4,6 @@ import functools
 from .config import config
 from .helper import urljoin
 from oauthlib.oauth2 import TokenExpiredError
-from requests import Response
 from requests_oauthlib import OAuth2Session
 import pytz
 import numbers
@@ -48,6 +47,10 @@ class SmappeeApi(object):
             auto_refresh_kwargs=extra,
             token_updater=token_updater,
         )
+
+    @property
+    def farm(self):
+        return self._farm
 
     @property
     def headers(self):

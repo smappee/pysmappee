@@ -4,20 +4,10 @@ from .servicelocation import SmappeeServiceLocation
 
 class Smappee(object):
 
-    def __init__(self, api, platform='PRODUCTION'):
+    def __init__(self, api):
         """
         :param api:
-        :param platform: default 'PRODUCTION'
         """
-
-        # convert platform to farm
-        self._platform = platform
-        platform_to_farm = {
-            'PRODUCTION': 1,
-            'ACCEPTANCE': 2,
-            'DEVELOPMENT': 3,
-        }
-        self._farm = platform_to_farm[self._platform]
 
         # shared api instance
         self.smappee_api = api
@@ -36,15 +26,10 @@ class Smappee(object):
                 # Create service location object
                 sl = SmappeeServiceLocation(service_location_id=service_location.get('serviceLocationId'),
                                             device_serial_number=service_location.get('deviceSerialNumber'),
-                                            smappee_api=self.smappee_api,
-                                            farm=self._farm)
+                                            smappee_api=self.smappee_api)
 
                 # Add sl object
                 self.service_locations[service_location.get('serviceLocationId')] = sl
-
-    @property
-    def username(self):
-        return self._username
 
     @property
     def service_locations(self):
