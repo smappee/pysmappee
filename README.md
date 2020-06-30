@@ -1,12 +1,12 @@
 Official Smappee Python Library
 ===============================
 
-Python Library for the Smappee dev API (v3) and MQTT interface.
+Python Library for the Smappee dev API (v3) and MQTT interface. Used as a wrapper dependency in the Home Assistant integration.
 
 Version
 -------
 
-0.1.0
+0.1.1
 
 Installation
 ------------
@@ -17,25 +17,9 @@ The recommended way to install is via [pip](https://pypi.org/)
 Getting Started
 ---------------
 Before we can use PySmappee, we need to be authenticated to the Smappee cloud.
-The authentication mechanism is based on oauth2 specification,
-for more information on the oauth2 spec see [http://oauth.net/documentation](http://oauth.net/documentation).
+The authentication mechanism is based on OAuth2 specification,
+for more information on the OAuth2 spec see [http://oauth.net/documentation](http://oauth.net/documentation).
 We need to register our application with Smappee by contacting [info@smappee.com](mailto:info@smappee.com).
-
-When we registered our application we got a `client_id` and `client_secret`.
-Together with our Smappee `username` and `password` we can create an instance of the Smappee class which automatically creates and API instance.
-
-```python
-from pysmappee import Smappee
-smappee = Smappee(username, password, client_id, client_secret)
-```
-
-The `load_configuration` method loads all shared service locations our user has access to.
-All details are iteratively saved into the `service_locations` property.
-
-```python
-smappee.load_configuration()
-smappee.service_locations  # dictionary holding all shared service location instances
-```
 
 Examples / Quickstart
 --------------------
@@ -180,8 +164,9 @@ Changelog
 * Disable IO modules
 * Align connection state values
 
-0.1.0
+0.1.{0, 1}
 * Refactor api to work with implicit account linking
+* Only keep farm variable in API class
 
 Support
 -------
