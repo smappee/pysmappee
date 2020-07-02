@@ -16,6 +16,8 @@ class SmappeeServiceLocation(object):
         self._device_serial_number = device_serial_number
         self._phase_type = None
         self._has_solar_production = False
+        self._has_voltage_values = False
+        self._has_reactive_value = False
         self._firmware_version = None
 
         # api instance to (re)load consumption data
@@ -134,6 +136,10 @@ class SmappeeServiceLocation(object):
         if self._device_serial_number.startswith('11'):
             self.has_solar_production = True
 
+        # Set voltage values on 5-series
+        if self._device_serial_number.startswith('50') or self._device_serial_number.startswith('51'):
+            self.has_voltage_values = True
+
         # Setup MQTT connection
         if not refresh:
             self.mqtt_connection_central = self.load_mqtt_connection(kind='central')
@@ -141,6 +147,7 @@ class SmappeeServiceLocation(object):
             # Only use a local MQTT broker for 20# or 50# series monitors
             if self._device_serial_number.startswith('20') or self._device_serial_number.startswith('50'):
                 self.mqtt_connection_local = self.load_mqtt_connection(kind='local')
+                self.has_reactive_value = True  # reactive only available through local MQTT
 
     @property
     def service_location_id(self):
@@ -194,6 +201,22 @@ class SmappeeServiceLocation(object):
     @has_solar_production.setter
     def has_solar_production(self, has_solar_production):
         self._has_solar_production = has_solar_production
+
+    @property
+    def has_voltage_values(self):
+        return self._has_voltage_values
+
+    @has_voltage_values.setter
+    def has_voltage_values(self, has_voltage_values):
+        self._has_voltage_values = has_voltage_values
+
+    @property
+    def has_reactive_value(self):
+        return self._has_reactive_value
+
+    @has_reactive_value.setter
+    def has_reactive_value(self, has_reactive_value):
+        self._has_reactive_value = has_reactive_value
 
     @property
     def latitude(self):
