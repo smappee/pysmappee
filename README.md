@@ -6,7 +6,7 @@ Python Library for the Smappee dev API (v3) and MQTT interface. Used as a wrappe
 Version
 -------
 
-0.1.2
+0.1.3
 
 Installation
 ------------
@@ -164,10 +164,13 @@ Changelog
 * Disable IO modules
 * Align connection state values
 
-0.1.{0, 1, 2}
+0.1.{0, 1}
 * Refactor api to work with implicit account linking
 * Only keep farm variable in API class
+
+0.1.{2, 3}
 * Only use local MQTT for 20- and 50-series
+* 11-series do have solar production
 
 Support
 -------
