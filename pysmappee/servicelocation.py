@@ -130,6 +130,10 @@ class SmappeeServiceLocation(object):
                 if measurement.get('type') == 'PRODUCTION':
                     self.has_solar_production = True
 
+        # Set solar production on 11-series (no measurements config available on non 50-series)
+        if self._device_serial_number.startswith('11'):
+            self.has_solar_production = True
+
         # Setup MQTT connection
         if not refresh:
             self.mqtt_connection_central = self.load_mqtt_connection(kind='central')
