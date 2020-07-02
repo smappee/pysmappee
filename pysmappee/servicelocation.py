@@ -133,7 +133,10 @@ class SmappeeServiceLocation(object):
         # Setup MQTT connection
         if not refresh:
             self.mqtt_connection_central = self.load_mqtt_connection(kind='central')
-            self.mqtt_connection_local = self.load_mqtt_connection(kind='local')
+
+            # Only use a local MQTT broker for 20# or 50# series monitors
+            if self._device_serial_number.startswith('20') or self._device_serial_number.startswith('50'):
+                self.mqtt_connection_local = self.load_mqtt_connection(kind='local')
 
     @property
     def service_location_id(self):

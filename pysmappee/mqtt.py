@@ -244,7 +244,9 @@ class SmappeeMqtt(threading.Thread):
                 self._client.connect(host=f'smappee{self._service_location.device_serial_number}.local',
                                      port=config['MQTT']['local']['port'])
             except socket.gaierror as _:
-                # unable to connect to local Smappee device
+                # unable to connect to local Smappee device (host unavailable)
+                return
+            except socket.timeout as _:
                 return
 
         self._client.loop_start()
