@@ -176,13 +176,18 @@ class SmappeeServiceLocation(object):
             '11': 'Solar',
             '20': 'Pro/Plus',
             '50': 'Genius',
-            '51': 'Connect',
+            '5100': 'Wi-Fi Connect',
+            '5110': 'Wi-Fi Connect',
+            '5130': 'Ethernet Connect',
+            '5140': '4G Connect',
             '57': 'P1S1 module',
         }
         if self.device_serial_number is None:
             return 'Smappee deactivated'
         elif self.device_serial_number[:2] in model_mapping:
             return f'Smappee {model_mapping[self.device_serial_number[:2]]}'
+        elif self.device_serial_number[:4] in model_mapping:
+            return f'Smappee {model_mapping[self.device_serial_number[:4]]}'
         else:
             'Smappee'
 
