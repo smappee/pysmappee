@@ -3,7 +3,7 @@ import datetime as dt
 import functools
 from .config import config
 from .helper import urljoin
-from oauthlib.oauth2 import TokenExpiredError
+from requests.exceptions import HTTPError
 from requests_oauthlib import OAuth2Session
 import pytz
 import numbers
@@ -16,8 +16,9 @@ def authenticated(func):
         self = args[0]
         try:
             return func(*args, **kwargs)
-        except TokenExpiredError:
-            self._oauth.token = self.refresh_tokens()
+        except HTTPError as e:
+            if e.response.status_code == 401:
+                self._oauth.token = self.refresh_tokens()
             return func(*args, **kwargs)
     return wrapper
 
