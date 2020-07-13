@@ -85,7 +85,7 @@ class SmappeeServiceLocation(object):
         if self._device_serial_number.startswith('50') or self._device_serial_number.startswith('51'):
             self.has_voltage_values = True
 
-        if self._local_polling:
+        if self.local_polling:
             self._service_location_name = f'Smappee {self.device_serial_number} local'
             self._service_location_uuid = 0
 
@@ -251,6 +251,10 @@ class SmappeeServiceLocation(object):
         self._has_reactive_value = has_reactive_value
 
     @property
+    def local_polling(self):
+        return self._local_polling
+
+    @property
     def latitude(self):
         return self._latitude
 
@@ -334,7 +338,7 @@ class SmappeeServiceLocation(object):
                                              connection_state=connection_state,
                                              type=actuator_type)
 
-        if not self._local_polling:
+        if not self.local_polling:
             # Get actuator state
             state = self.smappee_api.get_actuator_state(service_location_id=self.service_location_id,
                                                         actuator_id=id)
@@ -603,7 +607,7 @@ class SmappeeServiceLocation(object):
                     sensor.battery = consumption_result.get('records')[0].get('battery')
 
     def update_trends_and_appliance_states(self, ):
-        if self._local_polling:
+        if self.local_polling:
             self._realtime_values['total_power'] = self.smappee_api.active_power()
             if self.has_solar_production:
                 self._realtime_values['solar_power'] = self.smappee_api.active_power(solar=True)
