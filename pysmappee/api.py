@@ -187,3 +187,77 @@ class SmappeeApi(object):
             self.token_updater(token)
 
         return token
+
+
+class SmappeeLocalApi(object):
+
+    def __init__(
+            self,
+            ip
+    ):
+        self._ip = ip
+        self.session = requests.Session()
+
+    @property
+    def host(self):
+        return f'http://{self._ip}/gateway/apipublic'
+
+    @property
+    def headers(self):
+        return {"Content-Type": "application/json"}
+
+    def _post(self, url, data=None):
+        _url = urljoin(self.base_url, url)
+        r = self.session.post(_url,
+                              data=data,
+                              headers=self.headers,
+                              timeout=5)
+        r.raise_for_status()
+        return r
+
+    def logon(self):
+        r = self._post(url='logon', data='admin')
+        return r.json()
+
+    def load_advanced_config(self):
+        r = self._post(url='advancedConfigPublic', data='load')
+        return r.json()
+
+    def load_config(self):
+        r = self._post(url='configPublic', data='load')
+        return r.json()
+
+    def load_command_control_config(self):
+        r = self._post(url='commandControlPublic', data='load')
+        return r.json()
+
+    def load_instantaneous(self):
+        r = self._post(url='instantaneous', data='loadInstantaneous')
+        return r.json()
+
+    def active_power(self, solar=False):
+        inst = self.load_instantaneous()
+
+        if not solar:
+            power_keys = ['phase0ActivePower', 'phase1ActivePower', 'phase2ActivePower']
+        else:
+            power_keys = ['phase3ActivePower', 'phase4ActivePower', 'phase5ActivePower']
+
+        values = [float(i['value']) for i in inst if i['key'] in power_keys]
+        return int(sum(values) / 1000)
+
+    def set_actuator_state(self, service_location_id, actuator_id, state_id, duration=None):
+        if state_id == 'ON_ON':
+            return self.on_command_control(val_id=actuator_id)
+        elif state_id == 'OFF_OFF':
+            return self.off_command_control(val_id=actuator_id)
+
+    def on_command_control(self, val_id):
+        data = "control,{\"controllableNodeId\":\"" + str(val_id) + "\",\"action\":\"ON\"}"
+        r = self._post(url='commandControlPublic', data=data)
+        return r.json()
+
+    def off_command_control(self, val_id):
+        data = "control,{\"controllableNodeId\":\"" + str(val_id) + "\",\"action\":\"OFF\"}"
+        r = self._post(url='commandControlPublic', data=data)
+        return r.json()

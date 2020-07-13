@@ -10,7 +10,7 @@ from cachetools import TTLCache
 
 class SmappeeServiceLocation(object):
 
-    def __init__(self, service_location_id, device_serial_number, smappee_api):
+    def __init__(self, device_serial_number, smappee_api, service_location_id=None, local_polling=False):
         # service location details
         self._service_location_id = service_location_id
         self._device_serial_number = device_serial_number
@@ -22,6 +22,7 @@ class SmappeeServiceLocation(object):
 
         # api instance to (re)load consumption data
         self.smappee_api = smappee_api
+        self._local_polling = local_polling
 
         # mqtt connections
         self.mqtt_connection_central = None
@@ -76,62 +77,6 @@ class SmappeeServiceLocation(object):
         self.update_trends_and_appliance_states()
 
     def load_configuration(self, refresh=False):
-        # Collect service location info
-        sl_info = self.smappee_api.get_service_location_info(service_location_id=self.service_location_id)
-
-        # Collect metering configuration
-        sl_metering_configuration = self.smappee_api.get_metering_configuration(service_location_id=self.service_location_id)
-
-        # Service location details
-        self._service_location_name = sl_metering_configuration.get('name')
-        self._service_location_uuid = sl_metering_configuration.get('serviceLocationUuid')
-
-        # Set coordinates and timezone
-        self.latitude = sl_metering_configuration.get('lat')
-        self.longitude = sl_metering_configuration.get('lon')
-        self.timezone = sl_metering_configuration.get('timezone')
-
-        # Load appliances
-        for appliance in sl_metering_configuration.get('appliances'):
-            if appliance.get('type') != 'Find me' and appliance.get('sourceType') == 'NILM':
-                self._add_appliance(id=appliance.get('id'),
-                                    name=appliance.get('name'),
-                                    type=appliance.get('type'),
-                                    source_type=appliance.get('sourceType'))
-
-        # Load actuators (Smappee Switches, Comfort Plugs, IO modules)
-        for actuator in sl_metering_configuration.get('actuators'):
-            # temp disable IO modules until 1.6.0 release
-            if actuator.get('type') == 'INFINITY_OUTPUT_MODULE':
-                continue
-            self._add_actuator(id=actuator.get('id'),
-                               name=actuator.get('name'),
-                               serialnumber=actuator.get('serialNumber') if 'serialNumber' in actuator else None,
-                               state_values=actuator.get('states'),
-                               connection_state=actuator.get('connectionState'),
-                               actuator_type=actuator.get('type'))
-
-        # Load sensors (Smappee Gas and Water)
-        for sensor in sl_metering_configuration.get('sensors'):
-            self._add_sensor(id=sensor.get('id'),
-                             name=sensor.get('name'),
-                             channels=sensor.get('channels'))
-
-        # Set phase type
-        self.phase_type = sl_metering_configuration.get('phaseType') if 'phaseType' in sl_metering_configuration else None
-
-        # Load channel configuration
-        if 'measurements' in sl_metering_configuration:
-            for measurement in sl_metering_configuration.get('measurements'):
-                self._add_measurement(id=measurement.get('id'),
-                                      name=measurement.get('name'),
-                                      type=measurement.get('type'),
-                                      subcircuitType=measurement.get('subcircuitType') if 'subcircuitType' in measurement else None,
-                                      channels=measurement.get('channels'))
-
-                if measurement.get('type') == 'PRODUCTION':
-                    self.has_solar_production = True
-
         # Set solar production on 11-series (no measurements config available on non 50-series)
         if self._device_serial_number.startswith('11'):
             self.has_solar_production = True
@@ -140,14 +85,96 @@ class SmappeeServiceLocation(object):
         if self._device_serial_number.startswith('50') or self._device_serial_number.startswith('51'):
             self.has_voltage_values = True
 
-        # Setup MQTT connection
-        if not refresh:
-            self.mqtt_connection_central = self.load_mqtt_connection(kind='central')
+        if self._local_polling:
+            self._service_location_name = f'Smappee {self.device_serial_number} local'
+            self._service_location_uuid = 0
 
-            # Only use a local MQTT broker for 20# or 50# series monitors
-            if self._device_serial_number.startswith('20') or self._device_serial_number.startswith('50'):
-                self.mqtt_connection_local = self.load_mqtt_connection(kind='local')
-                self.has_reactive_value = True  # reactive only available through local MQTT
+            # Load actuators
+            self.smappee_api.logon()
+            command_control_config = self.smappee_api.load_command_control_config()
+            for ccc in command_control_config:
+                at = None
+                if ccc.get('type') == '2':
+                    at = 'COMFORT_PLUG'
+                elif ccc.get('type') == '3':
+                    at = 'SWITCH'
+                else:
+                    # Unknown actuator type
+                    continue
+                self._add_actuator(id=int(ccc.get('key')),
+                                   name=ccc.get('value'),
+                                   serialnumber=ccc.get('serialNumber'),
+                                   state_values=[
+                                       {'id': 'ON_ON', 'name': 'on', 'current': False},
+                                       {'id': 'OFF_OFF', 'name': 'off', 'current': False}
+                                   ],
+                                   connection_state=ccc.get('connectionStatus').upper() if 'connectionStatus' in ccc else None,
+                                   actuator_type=at)
+        else:
+            # Collect service location info
+            sl_info = self.smappee_api.get_service_location_info(service_location_id=self.service_location_id)
+
+            # Collect metering configuration
+            sl_metering_configuration = self.smappee_api.get_metering_configuration(service_location_id=self.service_location_id)
+
+            # Service location details
+            self._service_location_name = sl_metering_configuration.get('name')
+            self._service_location_uuid = sl_metering_configuration.get('serviceLocationUuid')
+
+            # Set coordinates and timezone
+            self.latitude = sl_metering_configuration.get('lat')
+            self.longitude = sl_metering_configuration.get('lon')
+            self.timezone = sl_metering_configuration.get('timezone')
+
+            # Load appliances
+            for appliance in sl_metering_configuration.get('appliances'):
+                if appliance.get('type') != 'Find me' and appliance.get('sourceType') == 'NILM':
+                    self._add_appliance(id=appliance.get('id'),
+                                        name=appliance.get('name'),
+                                        type=appliance.get('type'),
+                                        source_type=appliance.get('sourceType'))
+
+            # Load actuators (Smappee Switches, Comfort Plugs, IO modules)
+            for actuator in sl_metering_configuration.get('actuators'):
+                # temp disable IO modules until 1.6.0 release
+                if actuator.get('type') == 'INFINITY_OUTPUT_MODULE':
+                    continue
+                self._add_actuator(id=actuator.get('id'),
+                                   name=actuator.get('name'),
+                                   serialnumber=actuator.get('serialNumber') if 'serialNumber' in actuator else None,
+                                   state_values=actuator.get('states'),
+                                   connection_state=actuator.get('connectionState'),
+                                   actuator_type=actuator.get('type'))
+
+            # Load sensors (Smappee Gas and Water)
+            for sensor in sl_metering_configuration.get('sensors'):
+                self._add_sensor(id=sensor.get('id'),
+                                 name=sensor.get('name'),
+                                 channels=sensor.get('channels'))
+
+            # Set phase type
+            self.phase_type = sl_metering_configuration.get('phaseType') if 'phaseType' in sl_metering_configuration else None
+
+            # Load channel configuration
+            if 'measurements' in sl_metering_configuration:
+                for measurement in sl_metering_configuration.get('measurements'):
+                    self._add_measurement(id=measurement.get('id'),
+                                          name=measurement.get('name'),
+                                          type=measurement.get('type'),
+                                          subcircuitType=measurement.get('subcircuitType') if 'subcircuitType' in measurement else None,
+                                          channels=measurement.get('channels'))
+
+                    if measurement.get('type') == 'PRODUCTION':
+                        self.has_solar_production = True
+
+            # Setup MQTT connection
+            if not refresh:
+                self.mqtt_connection_central = self.load_mqtt_connection(kind='central')
+
+                # Only use a local MQTT broker for 20# or 50# series monitors
+                if self._device_serial_number.startswith('20') or self._device_serial_number.startswith('50'):
+                    self.mqtt_connection_local = self.load_mqtt_connection(kind='local')
+                    self.has_reactive_value = True  # reactive only available through local MQTT
 
     @property
     def service_location_id(self):
@@ -307,16 +334,17 @@ class SmappeeServiceLocation(object):
                                              connection_state=connection_state,
                                              type=actuator_type)
 
-        # Get actuator state
-        state = self.smappee_api.get_actuator_state(service_location_id=self.service_location_id,
-                                                    actuator_id=id)
-        self.actuators.get(id).state = state
+        if not self._local_polling:
+            # Get actuator state
+            state = self.smappee_api.get_actuator_state(service_location_id=self.service_location_id,
+                                                        actuator_id=id)
+            self.actuators.get(id).state = state
 
-        # Get actuator connection state (COMFORT_PLUG is always UNREACHABLE)
-        connection_state = self.smappee_api.get_actuator_connection_state(service_location_id=self.service_location_id,
-                                                                          actuator_id=id)
-        connection_state = connection_state.replace('"', '')
-        self.actuators.get(id).connection_state = connection_state
+            # Get actuator connection state (COMFORT_PLUG is always UNREACHABLE)
+            connection_state = self.smappee_api.get_actuator_connection_state(service_location_id=self.service_location_id,
+                                                                              actuator_id=id)
+            connection_state = connection_state.replace('"', '')
+            self.actuators.get(id).connection_state = connection_state
 
     def set_actuator_state(self, id, state, since=None, api=True):
         if id in self.actuators:
@@ -575,14 +603,19 @@ class SmappeeServiceLocation(object):
                     sensor.battery = consumption_result.get('records')[0].get('battery')
 
     def update_trends_and_appliance_states(self, ):
-        # update trend consumptions
-        self.update_active_consumptions(trend='today')
-        self.update_active_consumptions(trend='current_hour')
-        self.update_active_consumptions(trend='last_5_minutes')
-        self.update_todays_sensor_consumptions()
-        self.update_todays_actuator_consumptions()
+        if self._local_polling:
+            self._realtime_values['total_power'] = self.smappee_api.active_power()
+            if self.has_solar_production:
+                self._realtime_values['solar_power'] = self.smappee_api.active_power(solar=True)
+        else:
+            # update trend consumptions
+            self.update_active_consumptions(trend='today')
+            self.update_active_consumptions(trend='current_hour')
+            self.update_active_consumptions(trend='last_5_minutes')
+            self.update_todays_sensor_consumptions()
+            self.update_todays_actuator_consumptions()
 
-        # update appliance states
-        for appliance_id, _ in self.appliances.items():
-            self.update_appliance_state(id=appliance_id)
+            # update appliance states
+            for appliance_id, _ in self.appliances.items():
+                self.update_appliance_state(id=appliance_id)
 
