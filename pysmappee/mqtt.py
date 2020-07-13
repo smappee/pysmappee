@@ -194,7 +194,7 @@ class SmappeeMqtt(threading.Thread):
                 elif message.topic.endswith('/property/chargingstate'):
                     pass
 
-                elif discovery:
+                elif config['MQTT']['discovery']:
                     print(message.topic, message.payload)
 
             # specific HASS.io topics
