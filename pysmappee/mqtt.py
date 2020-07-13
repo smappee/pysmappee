@@ -111,6 +111,8 @@ class SmappeeMqtt(threading.Thread):
             elif message.topic == f'{self.topic_prefix}/config':
                 config_details = json.loads(message.payload)
                 self._service_location.firmware_version = config_details.get('firmwareVersion')
+                self._service_location._service_location_uuid = config_details.get('serviceLocationUuid')
+                self._service_location._service_location_id = config_details.get('serviceLocationId')
             elif message.topic == f'{self.topic_prefix}/sensorConfig':
                 pass
             elif message.topic == f'{self.topic_prefix}/homeControlConfig':
