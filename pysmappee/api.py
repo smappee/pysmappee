@@ -207,7 +207,7 @@ class SmappeeLocalApi(object):
         return {"Content-Type": "application/json"}
 
     def _post(self, url, data=None):
-        _url = urljoin(self.base_url, url)
+        _url = urljoin(self.host, url)
         r = self.session.post(_url,
                               data=data,
                               headers=self.headers,
