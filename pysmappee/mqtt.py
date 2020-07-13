@@ -17,10 +17,11 @@ def tracking(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         self = args[0]
-        if time.time() - self._last_tracking > tracking_interval:
-            self._publish_tracking()
-        if time.time() - self._last_heartbeat > heartbeat_interval:
-            self._publish_heartbeat()
+        if self._kind == 'central':
+            if time.time() - self._last_tracking > tracking_interval:
+                self._publish_tracking()
+            if time.time() - self._last_heartbeat > heartbeat_interval:
+                self._publish_heartbeat()
         return func(*args, **kwargs)
     return wrapper
 
@@ -229,8 +230,9 @@ class SmappeeMqtt(threading.Thread):
 
     def start(self):
         self._client = mqtt.Client(client_id=self._get_client_id())
-        self._client.username_pw_set(username=self._service_location.service_location_uuid,
-                                     password=self._service_location.service_location_uuid)
+        if self._kind == 'central':
+            self._client.username_pw_set(username=self._service_location.service_location_uuid,
+                                         password=self._service_location.service_location_uuid)
         self._client.on_connect = lambda client, userdata, flags, rc: self._on_connect(client, userdata, flags, rc)
         self._client.on_message = lambda client, userdata, message: self._on_message(client, userdata, message)
         self._client.on_disconnect = lambda client, userdata, rc: self._on_disconnect(client, userdata, rc)
