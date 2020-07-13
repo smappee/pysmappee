@@ -42,7 +42,10 @@ class SmappeeMqtt(threading.Thread):
         return f'servicelocation/{self._service_location.service_location_uuid}'
 
     def _on_connect(self, client, userdata, flags, rc):
-        self._client.subscribe(topic=f'{self.topic_prefix}/#')
+        if self._kind == 'local':
+            self._client.subscribe(topic='#')
+        else:
+            self._client.subscribe(topic=f'{self.topic_prefix}/#')
 
     def _publish_tracking(self):
         # turn OFF current tracking and restore
