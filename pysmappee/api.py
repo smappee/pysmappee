@@ -3,7 +3,7 @@ import datetime as dt
 import functools
 from .config import config
 from .helper import urljoin
-from requests.exceptions import HTTPError
+from requests.exceptions import HTTPError, ConnectTimeout
 from requests_oauthlib import OAuth2Session
 import pytz
 import numbers
@@ -236,7 +236,10 @@ class SmappeeLocalApi(object):
         return r.json()
 
     def active_power(self, solar=False):
-        inst = self.load_instantaneous()
+        try:
+            inst = self.load_instantaneous()
+        except ConnectTimeout:
+            return None
 
         if not solar:
             power_keys = ['phase0ActivePower', 'phase1ActivePower', 'phase2ActivePower']
