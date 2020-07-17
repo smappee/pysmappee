@@ -608,9 +608,16 @@ class SmappeeServiceLocation(object):
 
     def update_trends_and_appliance_states(self, ):
         if self.local_polling:
-            self._realtime_values['total_power'] = self.smappee_api.active_power()
+            # Active power
+            tp = self.smappee_api.active_power()
+            if tp is not None:
+                self._realtime_values['total_power'] = tp
+
+            # Solar power
             if self.has_solar_production:
-                self._realtime_values['solar_power'] = self.smappee_api.active_power(solar=True)
+                sp = self.smappee_api.active_power(solar=True)
+                if sp is not None:
+                    self._realtime_values['solar_power'] = sp
         else:
             # update trend consumptions
             self.update_active_consumptions(trend='today')
