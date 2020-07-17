@@ -26,8 +26,8 @@ class Smappee(object):
                 # refresh the configuration
                 sl = self.service_locations.get(service_location.get('serviceLocationId'))
                 sl.load_configuration(refresh=refresh)
-            else:
-                # Create service location object
+            elif 'deviceSerialNumber' in service_location:
+                # Create service location object if the serialnumber is known
                 sl = SmappeeServiceLocation(service_location_id=service_location.get('serviceLocationId'),
                                             device_serial_number=service_location.get('deviceSerialNumber'),
                                             smappee_api=self.smappee_api)
