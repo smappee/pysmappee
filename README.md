@@ -6,7 +6,7 @@ Python Library for the Smappee dev API (v3) and MQTT interface. Used as a wrappe
 Version
 -------
 
-0.2.4
+0.2.5
 
 Installation
 ------------
@@ -179,8 +179,9 @@ Changelog
 0.1.5
 * Catch expired token as an HTTPError
 
-0.2.{0, 1, 2, 3, 4}
+0.2.{0, 1, 2, 3, 4, 5}
 * Implement standalone local API
+* Only create objects if the serialnumber is known
 
 Support
 -------
