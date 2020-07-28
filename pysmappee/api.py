@@ -3,7 +3,7 @@ import datetime as dt
 import functools
 from .config import config
 from .helper import urljoin
-from requests.exceptions import HTTPError, ConnectTimeout, ReadTimeout
+from requests.exceptions import HTTPError, ConnectTimeout, ReadTimeout, ConnectionError
 from requests_oauthlib import OAuth2Session
 import pytz
 import numbers
@@ -238,7 +238,10 @@ class SmappeeLocalApi(object):
     def active_power(self, solar=False):
         try:
             inst = self.load_instantaneous()
-        except (ConnectTimeout, ReadTimeout):
+            if 'error' in inst and inst['error'] == 'Error not authenticated. Use Logon first!':
+                self.logon()
+                inst = self.load_instantaneous()
+        except (ConnectTimeout, ReadTimeout, ConnectionError, HTTPError):
             return None
 
         if not solar:
