@@ -3,7 +3,7 @@ import datetime as dt
 import functools
 from .config import config
 from .helper import urljoin
-from requests.exceptions import HTTPError, ConnectTimeout
+from requests.exceptions import HTTPError, ConnectTimeout, ReadTimeout
 from requests_oauthlib import OAuth2Session
 import pytz
 import numbers
@@ -238,7 +238,7 @@ class SmappeeLocalApi(object):
     def active_power(self, solar=False):
         try:
             inst = self.load_instantaneous()
-        except ConnectTimeout:
+        except (ConnectTimeout, ReadTimeout):
             return None
 
         if not solar:
