@@ -206,42 +206,43 @@ class SmappeeLocalApi(object):
     def headers(self):
         return {"Content-Type": "application/json"}
 
-    def _post(self, url, data=None):
-        _url = urljoin(self.host, url)
-        r = self.session.post(_url,
-                              data=data,
-                              headers=self.headers,
-                              timeout=5)
-        r.raise_for_status()
-        return r
+    def _post(self, url, data=None, retry=False):
+        try:
+            _url = urljoin(self.host, url)
+            r = self.session.post(_url,
+                                  data=data,
+                                  headers=self.headers,
+                                  timeout=5)
+            r.raise_for_status()
+
+            msg = r.json()
+            if not retry and 'error' in msg and msg['error'] == 'Error not authenticated. Use Logon first!':
+                self.logon()
+                return self._post(url=url, data=data, retry=True)
+
+            return msg
+        except (ConnectTimeout, ReadTimeout, ConnectionError, HTTPError):
+            return None
 
     def logon(self):
-        r = self._post(url='logon', data='admin')
-        return r.json()
+        return self._post(url='logon', data='admin')
 
     def load_advanced_config(self):
-        r = self._post(url='advancedConfigPublic', data='load')
-        return r.json()
+        return self._post(url='advancedConfigPublic', data='load')
 
     def load_config(self):
-        r = self._post(url='configPublic', data='load')
-        return r.json()
+        return self._post(url='configPublic', data='load')
 
     def load_command_control_config(self):
-        r = self._post(url='commandControlPublic', data='load')
-        return r.json()
+        return self._post(url='commandControlPublic', data='load')
 
     def load_instantaneous(self):
-        r = self._post(url='instantaneous', data='loadInstantaneous')
-        return r.json()
+        return self._post(url='instantaneous', data='loadInstantaneous')
 
     def active_power(self, solar=False):
-        try:
-            inst = self.load_instantaneous()
-            if 'error' in inst and inst['error'] == 'Error not authenticated. Use Logon first!':
-                self.logon()
-                inst = self.load_instantaneous()
-        except (ConnectTimeout, ReadTimeout, ConnectionError, HTTPError):
+        inst = self.load_instantaneous()
+
+        if inst is None:
             return None
 
         if not solar:
@@ -260,10 +261,8 @@ class SmappeeLocalApi(object):
 
     def on_command_control(self, val_id):
         data = "control,{\"controllableNodeId\":\"" + str(val_id) + "\",\"action\":\"ON\"}"
-        r = self._post(url='commandControlPublic', data=data)
-        return r.json()
+        return self._post(url='commandControlPublic', data=data)
 
     def off_command_control(self, val_id):
         data = "control,{\"controllableNodeId\":\"" + str(val_id) + "\",\"action\":\"OFF\"}"
-        r = self._post(url='commandControlPublic', data=data)
-        return r.json()
+        return self._post(url='commandControlPublic', data=data)
