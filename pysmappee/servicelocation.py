@@ -92,24 +92,24 @@ class SmappeeServiceLocation(object):
             # Load actuators
             self.smappee_api.logon()
             command_control_config = self.smappee_api.load_command_control_config()
-            for ccc in command_control_config:
-                at = None
-                if ccc.get('type') == '2':
-                    at = 'COMFORT_PLUG'
-                elif ccc.get('type') == '3':
-                    at = 'SWITCH'
-                else:
-                    # Unknown actuator type
-                    continue
-                self._add_actuator(id=int(ccc.get('key')),
-                                   name=ccc.get('value'),
-                                   serialnumber=ccc.get('serialNumber'),
-                                   state_values=[
-                                       {'id': 'ON_ON', 'name': 'on', 'current': False},
-                                       {'id': 'OFF_OFF', 'name': 'off', 'current': False}
-                                   ],
-                                   connection_state=ccc.get('connectionStatus').upper() if 'connectionStatus' in ccc else None,
-                                   actuator_type=at)
+            if command_control_config is not None:
+                for ccc in command_control_config:
+                    if ccc.get('type') == '2':
+                        at = 'COMFORT_PLUG'
+                    elif ccc.get('type') == '3':
+                        at = 'SWITCH'
+                    else:
+                        # Unknown actuator type
+                        continue
+                    self._add_actuator(id=int(ccc.get('key')),
+                                       name=ccc.get('value'),
+                                       serialnumber=ccc.get('serialNumber'),
+                                       state_values=[
+                                           {'id': 'ON_ON', 'name': 'on', 'current': False},
+                                           {'id': 'OFF_OFF', 'name': 'off', 'current': False}
+                                       ],
+                                       connection_state=ccc.get('connectionStatus').upper() if 'connectionStatus' in ccc else None,
+                                       actuator_type=at)
         else:
             # Collect service location info
             sl_info = self.smappee_api.get_service_location_info(service_location_id=self.service_location_id)
