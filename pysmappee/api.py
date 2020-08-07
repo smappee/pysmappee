@@ -198,6 +198,10 @@ class SmappeeLocalApi(object):
         self._ip = ip
         self.session = requests.Session()
 
+        # default indices for Smappee Energy and Solar
+        self.consumption_indices = ['phase0ActivePower', 'phase1ActivePower', 'phase2ActivePower']
+        self.production_indices = ['phase3ActivePower', 'phase4ActivePower', 'phase5ActivePower']
+
     @property
     def host(self):
         return f'http://{self._ip}/gateway/apipublic'
@@ -230,6 +234,24 @@ class SmappeeLocalApi(object):
     def load_advanced_config(self):
         return self._post(url='advancedConfigPublic', data='load')
 
+    def load_channels_config(self):
+        """
+        Method only available on Smappee2-series devices
+        """
+
+        # reset consumption and production indices
+        self.consumption_indices, self.production_indices = [], []
+
+        cc = self._post(url='channelsConfigPublic', data='load')
+        for input_channel in cc['inputChannels']:
+            if input_channel['inputChannelConnection'] == 'GRID':
+                if input_channel['inputChannelType'] == 'CONSUMPTION':
+                    self.consumption_indices.append(f'phase{input_channel["ctInput"]}ActivePower')
+                elif input_channel['inputChannelType'] == 'PRODUCTION':
+                    self.production_indices.append(f'phase{input_channel["ctInput"]}ActivePower')
+
+        return cc
+
     def load_config(self):
         return self._post(url='configPublic', data='load')
 
@@ -245,13 +267,13 @@ class SmappeeLocalApi(object):
         if inst is None:
             return None
 
-        if not solar:
-            power_keys = ['phase0ActivePower', 'phase1ActivePower', 'phase2ActivePower']
-        else:
-            power_keys = ['phase3ActivePower', 'phase4ActivePower', 'phase5ActivePower']
+        power_keys = self.production_indices if solar else self.consumption_indices
 
         values = [float(i['value']) for i in inst if i['key'] in power_keys]
-        return int(sum(values) / 1000)
+        if values:
+            return int(sum(values) / 1000)
+        else:
+            return 0
 
     def set_actuator_state(self, service_location_id, actuator_id, state_id, duration=None):
         if state_id == 'ON_ON':

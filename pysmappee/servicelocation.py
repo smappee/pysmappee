@@ -110,6 +110,14 @@ class SmappeeServiceLocation(object):
                                        ],
                                        connection_state=ccc.get('connectionStatus').upper() if 'connectionStatus' in ccc else None,
                                        actuator_type=at)
+
+            # Load channels config pro Smappee2-series only
+            if self._device_serial_number.startswith('2'):
+                channels_config = self.smappee_api.load_channels_config()
+                for input_channel in channels_config['inputChannels']:
+                    if input_channel['inputChannelType'] == 'PRODUCTION' and input_channel['inputChannelConnection'] == 'GRID':
+                        self.has_solar_production = True
+
         else:
             # Collect service location info
             sl_info = self.smappee_api.get_service_location_info(service_location_id=self.service_location_id)
