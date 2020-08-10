@@ -4,6 +4,7 @@ import functools
 import numbers
 import pytz
 import requests
+from cachetools import TTLCache
 from requests.exceptions import HTTPError, ConnectTimeout, ReadTimeout, \
     ConnectionError as RequestsConnectionError
 from requests_oauthlib import OAuth2Session
@@ -252,6 +253,9 @@ class SmappeeLocalApi:
         self.consumption_indices = ['phase0ActivePower', 'phase1ActivePower', 'phase2ActivePower']
         self.production_indices = ['phase3ActivePower', 'phase4ActivePower', 'phase5ActivePower']
 
+        # cache instantaneous load
+        self.load_cache = TTLCache(maxsize=1, ttl=5)
+
     @property
     def host(self):
         return f'http://{self._ip}/gateway/apipublic'
@@ -313,6 +317,14 @@ class SmappeeLocalApi:
         return self._post(url='instantaneous', data='loadInstantaneous')
 
     def active_power(self, solar=False):
+        """
+        Get the current active power consumption or solar production. Result is cached.
+        :param solar:
+        :return:
+        """
+        if 'instantaneous' in self.load_cache:
+            return self.load_cache['instantaneous']
+
         inst = self.load_instantaneous()
 
         if inst is None:
@@ -322,9 +334,12 @@ class SmappeeLocalApi:
 
         values = [float(i['value']) for i in inst if i['key'] in power_keys]
         if values:
-            return int(sum(values) / 1000)
+            power = int(sum(values) / 1000)
         else:
-            return 0
+            power = 0
+        self.load_cache['instantaneous'] = power
+
+        return power
 
     def set_actuator_state(self, service_location_id, actuator_id, state_id, duration=None):
         if state_id == 'ON_ON':
