@@ -1,15 +1,16 @@
-import paho.mqtt.client as mqtt
-import threading
+"""Support for cloud and local Smappee MQTT."""
 import json
-import time
+import threading
 import socket
+import time
 import traceback
 from functools import wraps
+import paho.mqtt.client as mqtt
 from .config import config
 
 
-tracking_interval = 60 * 5
-heartbeat_interval = 60 * 1
+TRACKING_INTERVAL = 60 * 5
+HEARTBEAT_INTERVAL = 60 * 1
 
 
 def tracking(func):
@@ -18,15 +19,16 @@ def tracking(func):
     def wrapper(*args, **kwargs):
         self = args[0]
         if self._kind == 'central':
-            if time.time() - self._last_tracking > tracking_interval:
+            if time.time() - self._last_tracking > TRACKING_INTERVAL:
                 self._publish_tracking()
-            if time.time() - self._last_heartbeat > heartbeat_interval:
+            if time.time() - self._last_heartbeat > HEARTBEAT_INTERVAL:
                 self._publish_heartbeat()
         return func(*args, **kwargs)
     return wrapper
 
 
 class SmappeeMqtt(threading.Thread):
+    """Smappee MQTT wrapper."""
 
     def __init__(self, service_location, kind, farm):
         self._client = None
@@ -35,7 +37,10 @@ class SmappeeMqtt(threading.Thread):
         self._farm = farm
         self._last_tracking = 0
         self._last_heartbeat = 0
-        threading.Thread.__init__(self, name=f'SmappeeMqttListener_{self._service_location.service_location_uuid}')
+        threading.Thread.__init__(
+            self,
+            name=f'SmappeeMqttListener_{self._service_location.service_location_uuid}'
+        )
 
     @property
     def topic_prefix(self):
@@ -230,7 +235,7 @@ class SmappeeMqtt(threading.Thread):
                                                                          since=plug_state_since)
             elif config['MQTT']['discovery']:
                 print(message.topic, message.payload)
-        except Exception as e:
+        except Exception:
             traceback.print_exc()
 
     def start(self):

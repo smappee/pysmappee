@@ -637,4 +637,3 @@ class SmappeeServiceLocation(object):
             # update appliance states
             for appliance_id, _ in self.appliances.items():
                 self.update_appliance_state(id=appliance_id)
-

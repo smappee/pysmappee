@@ -1,12 +1,14 @@
-import requests
+"""Support for cloud and local Smappee API."""
 import datetime as dt
 import functools
+import numbers
+import pytz
+import requests
+from requests.exceptions import HTTPError, ConnectTimeout, ReadTimeout, \
+    ConnectionError as RequestsConnectionError
+from requests_oauthlib import OAuth2Session
 from .config import config
 from .helper import urljoin
-from requests.exceptions import HTTPError, ConnectTimeout, ReadTimeout, ConnectionError
-from requests_oauthlib import OAuth2Session
-import pytz
-import numbers
 
 
 def authenticated(func):
@@ -23,7 +25,8 @@ def authenticated(func):
     return wrapper
 
 
-class SmappeeApi(object):
+class SmappeeApi:
+    """Public Smappee cloud API wrapper."""
 
     def __init__(
             self,
@@ -66,14 +69,22 @@ class SmappeeApi(object):
 
     @authenticated
     def get_metering_configuration(self, service_location_id):
-        url = urljoin(config['API_URL'][self._farm]['servicelocation_url'], service_location_id, "meteringconfiguration")
+        url = urljoin(
+            config['API_URL'][self._farm]['servicelocation_url'],
+            service_location_id,
+            "meteringconfiguration"
+        )
         r = requests.get(url, headers=self.headers)
         r.raise_for_status()
         return r.json()
 
     @authenticated
     def get_service_location_info(self, service_location_id):
-        url = urljoin(config['API_URL'][self._farm]['servicelocation_url'], service_location_id, "info")
+        url = urljoin(
+            config['API_URL'][self._farm]['servicelocation_url'],
+            service_location_id,
+            "info"
+        )
         r = requests.get(url, headers=self.headers)
         r.raise_for_status()
         return r.json()
@@ -91,7 +102,11 @@ class SmappeeApi(object):
             7 = ...
             8 = ...
         """
-        url = urljoin(config['API_URL'][self._farm]['servicelocation_url'], service_location_id, "consumption")
+        url = urljoin(
+            config['API_URL'][self._farm]['servicelocation_url'],
+            service_location_id,
+            "consumption"
+        )
         d = self._get_consumption(url=url, start=start, end=end, aggregation=aggregation)
         for block in d['consumptions']:
             if 'alwaysOn' not in block.keys():
@@ -101,12 +116,24 @@ class SmappeeApi(object):
 
     @authenticated
     def get_sensor_consumption(self, service_location_id, sensor_id, start, end, aggregation):
-        url = urljoin(config['API_URL'][self._farm]['servicelocation_url'], service_location_id, "sensor", sensor_id, "consumption")
+        url = urljoin(
+            config['API_URL'][self._farm]['servicelocation_url'],
+            service_location_id,
+            "sensor",
+            sensor_id,
+            "consumption"
+        )
         return self._get_consumption(url=url, start=start, end=end, aggregation=aggregation)
 
     @authenticated
     def get_switch_consumption(self, service_location_id, switch_id, start, end, aggregation):
-        url = urljoin(config['API_URL'][self._farm]['servicelocation_url'], service_location_id, "switch", switch_id, "consumption")
+        url = urljoin(
+            config['API_URL'][self._farm]['servicelocation_url'],
+            service_location_id,
+            "switch",
+            switch_id,
+            "consumption"
+        )
         return self._get_consumption(url=url, start=start, end=end, aggregation=aggregation)
 
     def _get_consumption(self, url, start, end, aggregation):
@@ -125,7 +152,11 @@ class SmappeeApi(object):
     def get_events(self, service_location_id, appliance_id, start, end, max_number=None):
         start, end = self._to_milliseconds(start), self._to_milliseconds(end)
 
-        url = urljoin(config['API_URL'][self._farm]['servicelocation_url'], service_location_id, "events")
+        url = urljoin(
+            config['API_URL'][self._farm]['servicelocation_url'],
+            service_location_id,
+            "events"
+        )
         params = {
             "from": start,
             "to": end,
@@ -138,14 +169,26 @@ class SmappeeApi(object):
 
     @authenticated
     def get_actuator_state(self, service_location_id, actuator_id):
-        url = urljoin(config['API_URL'][self._farm]['servicelocation_url'], service_location_id, "actuator", actuator_id, "state")
+        url = urljoin(
+            config['API_URL'][self._farm]['servicelocation_url'],
+            service_location_id,
+            "actuator",
+            actuator_id,
+            "state"
+        )
         r = requests.get(url, headers=self.headers)
         r.raise_for_status()
         return r.text
 
     @authenticated
     def set_actuator_state(self, service_location_id, actuator_id, state_id, duration=None):
-        url = urljoin(config['API_URL'][self._farm]['servicelocation_url'], service_location_id, "actuator", actuator_id, state_id)
+        url = urljoin(
+            config['API_URL'][self._farm]['servicelocation_url'],
+            service_location_id,
+            "actuator",
+            actuator_id,
+            state_id
+        )
         data = {} if duration is None else {"duration": duration}
         r = requests.post(url, headers=self.headers, json=data)
         r.raise_for_status()
@@ -153,7 +196,13 @@ class SmappeeApi(object):
 
     @authenticated
     def get_actuator_connection_state(self, service_location_id, actuator_id):
-        url = urljoin(config['API_URL'][self._farm]['servicelocation_url'], service_location_id, "actuator", actuator_id, "connectionstate")
+        url = urljoin(
+            config['API_URL'][self._farm]['servicelocation_url'],
+            service_location_id,
+            "actuator",
+            actuator_id,
+            "connectionstate"
+        )
         r = requests.get(url, headers=self.headers)
         r.raise_for_status()
         return r.text
@@ -189,7 +238,8 @@ class SmappeeApi(object):
         return token
 
 
-class SmappeeLocalApi(object):
+class SmappeeLocalApi:
+    """Smappee local API wrapper."""
 
     def __init__(
             self,
@@ -220,12 +270,13 @@ class SmappeeLocalApi(object):
             r.raise_for_status()
 
             msg = r.json()
-            if not retry and 'error' in msg and msg['error'] == 'Error not authenticated. Use Logon first!':
+            if not retry and 'error' in msg \
+                    and msg['error'] == 'Error not authenticated. Use Logon first!':
                 self.logon()
                 return self._post(url=url, data=data, retry=True)
 
             return msg
-        except (ConnectTimeout, ReadTimeout, ConnectionError, HTTPError):
+        except (ConnectTimeout, ReadTimeout, RequestsConnectionError, HTTPError):
             return None
 
     def logon(self):

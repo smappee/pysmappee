@@ -35,5 +35,3 @@ config['MQTT'] = {
     },
     'discovery': False,
 }
-
-

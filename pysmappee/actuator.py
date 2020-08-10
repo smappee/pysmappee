@@ -1,4 +1,8 @@
+"""Support for all kinds of Smappee plugs."""
+
+
 class SmappeeActuator:
+    """Representation of a Smappee Comfort Plug, Switch and IO module."""
 
     def __init__(self, id, name, serialnumber, state_values, connection_state, type):
         # configuration details
@@ -14,10 +18,10 @@ class SmappeeActuator:
 
         # extract current state and possible values from state_values
         self._state_options = []
-        for s in self._state_values:
-            self._state_options.append(s.get('id'))
-            if s.get('current'):
-                self._state = s.get('id')
+        for state_value in self._state_values:
+            self._state_options.append(state_value.get('id'))
+            if state_value.get('current'):
+                self._state = state_value.get('id')
 
         # aggregated values (only for Smappee Switch)
         self._consumption_today = None
@@ -76,4 +80,3 @@ class SmappeeActuator:
     @consumption_today.setter
     def consumption_today(self, consumption_today):
         self._consumption_today = consumption_today
-

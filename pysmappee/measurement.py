@@ -1,4 +1,8 @@
+"""Support for all kinds of Smappee measurements."""
+
+
 class SmappeeMeasurement:
+    """Representation of a Smappee measurement."""
 
     def __init__(self, id, name, type, subcircuit_type, channels):
         # configuration details
@@ -44,9 +48,9 @@ class SmappeeMeasurement:
 
     def update_active(self, active, source='CENTRAL'):
         index = 'powerTopicIndex' if source == 'CENTRAL' else 'consumptionIndex'
-        for c in self.channels:
-            if index in c:
-                c['active'] = active[c.get(index)]
+        for channel in self.channels:
+            if index in channel:
+                channel['active'] = active[channel.get(index)]
         self._active_total = sum([c.get('active') for c in self.channels if index in c])
 
     @property
@@ -55,9 +59,9 @@ class SmappeeMeasurement:
 
     def update_reactive(self, reactive, source='CENTRAL'):
         index = 'powerTopicIndex' if source == 'CENTRAL' else 'consumptionIndex'
-        for c in self.channels:
-            if index in c:
-                c['reactive'] = reactive[c.get(index)]
+        for channel in self.channels:
+            if index in channel:
+                channel['reactive'] = reactive[channel.get(index)]
         self._reactive_total = sum([c.get('reactive') for c in self.channels if index in c])
 
     @property
@@ -66,8 +70,7 @@ class SmappeeMeasurement:
 
     def update_current(self, current, source='CENTRAL'):
         index = 'powerTopicIndex' if source == 'CENTRAL' else 'consumptionIndex'
-        for c in self.channels:
-            if index in c:
-                c['current'] = current[c.get(index)]
+        for channel in self.channels:
+            if index in channel:
+                channel['current'] = current[channel.get(index)]
         self._current_total = sum([c.get('current') for c in self.channels if index in c])
-

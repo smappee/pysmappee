@@ -39,4 +39,3 @@ class SmappeeAppliance:
     @power.setter
     def power(self, power):
         self._power = power
-

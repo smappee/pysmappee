@@ -54,4 +54,3 @@ class SmappeeSensor:
     @battery.setter
     def battery(self, battery):
         self._battery = battery
-

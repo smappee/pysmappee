@@ -1,7 +1,7 @@
 from .servicelocation import SmappeeServiceLocation
 
 
-class Smappee(object):
+class Smappee:
 
     def __init__(self, api, serialnumber=None):
         """
@@ -55,4 +55,3 @@ class Smappee(object):
     def update_trends_and_appliance_states(self):
         for _, sl in self.service_locations.items():
             sl.update_trends_and_appliance_states()
-

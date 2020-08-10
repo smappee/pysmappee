@@ -1,4 +1,5 @@
 class SmappeeSmartDevice:
+
     def __init__(self, uuid, name, category, implementation, minCurrent, maxCurrent, measurements):
         # configuration details
         self.uuid = uuid
