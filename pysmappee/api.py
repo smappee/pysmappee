@@ -266,7 +266,7 @@ class SmappeeLocalApi:
             r = self.session.post(_url,
                                   data=data,
                                   headers=self.headers,
-                                  timeout=5)
+                                  timeout=2)
             r.raise_for_status()
 
             msg = r.json()
