@@ -118,9 +118,6 @@ class SmappeeServiceLocation(object):
                         self.has_solar_production = True
 
         else:
-            # Collect service location info
-            sl_info = self.smappee_api.get_service_location_info(service_location_id=self.service_location_id)
-
             # Collect metering configuration
             sl_metering_configuration = self.smappee_api.get_metering_configuration(service_location_id=self.service_location_id)
 
