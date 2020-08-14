@@ -24,7 +24,7 @@ class SmappeeSmartDevice:
         self.setCurrents = [None, None, None]
 
     def set_current(self, phase, current):
-        self.setCurrents[phase-1] = current
+        self.setCurrents[phase - 1] = current
 
     def set_connection_status(self, connection_status):
         self.connection_status = connection_status

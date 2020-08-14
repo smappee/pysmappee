@@ -290,9 +290,7 @@ class SmappeeLocalApi:
         return self._post(url='advancedConfigPublic', data='load')
 
     def load_channels_config(self):
-        """
-        Method only available on Smappee2-series devices
-        """
+        # Method only available on Smappee2-series devices
 
         # reset consumption and production indices
         self.consumption_indices, self.production_indices = [], []
@@ -319,6 +317,7 @@ class SmappeeLocalApi:
     def active_power(self, solar=False):
         """
         Get the current active power consumption or solar production. Result is cached.
+
         :param solar:
         :return:
         """

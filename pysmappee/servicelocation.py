@@ -106,8 +106,7 @@ class SmappeeServiceLocation(object):
                                        serialnumber=ccc.get('serialNumber'),
                                        state_values=[
                                            {'id': 'ON_ON', 'name': 'on', 'current': ccc.get('relayStatus') is True},
-                                           {'id': 'OFF_OFF', 'name': 'off', 'current': ccc.get('relayStatus') is False}
-                                       ],
+                                           {'id': 'OFF_OFF', 'name': 'off', 'current': ccc.get('relayStatus') is False}],
                                        connection_state=ccc.get('connectionStatus').upper() if 'connectionStatus' in ccc else None,
                                        actuator_type=at)
 

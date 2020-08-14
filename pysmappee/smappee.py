@@ -8,7 +8,6 @@ class Smappee:
         :param api:
         :param serialNumber:
         """
-
         # shared api instance
         self.smappee_api = api
 
