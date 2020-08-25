@@ -6,7 +6,7 @@ Python Library for the Smappee dev API (v3) and MQTT interface. Used as a wrappe
 Version
 -------
 
-0.2.10
+0.2.11
 
 Installation
 ------------
@@ -187,6 +187,9 @@ Changelog
 0.2.10
 * Phase 2 Local API (support Smappee Pro/Plus)
 * Local API improvements (Switch current status, cache load)
+
+0.2.11
+* Activate IO modules
 
 Support
 -------
