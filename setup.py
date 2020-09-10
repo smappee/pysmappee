@@ -22,13 +22,9 @@ setuptools.setup(
     python_requires='>=3.7',
     install_requires=[
         "cachetools>=4.0.0",
-        "certifi>=2019.11.28",
-        "chardet>=3.0.4",
-        "idna>=2.9",
         "paho-mqtt>=1.5.0",
         "pytz>=2019.3",
         "requests>=2.23.0",
-        "tornado>=6.0.3",
-        "urllib3>=1.25.8",
+        "requests-oauthlib>=1.3.0",
     ],
 )
