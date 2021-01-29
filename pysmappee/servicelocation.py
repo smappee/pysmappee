@@ -110,8 +110,10 @@ class SmappeeServiceLocation(object):
                                        connection_state=ccc.get('connectionStatus').upper() if 'connectionStatus' in ccc else None,
                                        actuator_type=at)
 
-            # Load channels config pro Smappee2-series only
-            if self._device_serial_number.startswith('2'):
+            # Load channels config pro Smappee11 and 2-series and only
+            if self._device_serial_number.startswith('11'):
+                self.smappee_api.load_config()
+            elif self._device_serial_number.startswith('2'):
                 channels_config = self.smappee_api.load_channels_config()
                 for input_channel in channels_config['inputChannels']:
                     if input_channel['inputChannelType'] == 'PRODUCTION' and input_channel['inputChannelConnection'] == 'GRID':
