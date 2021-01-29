@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pysmappee",
-    version="0.2.14",
+    version="0.2.15",
     author="Smappee",
     author_email="support@smappee.com",
     description="Offical Smappee dev API and MQTT python wrapper",

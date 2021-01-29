@@ -70,6 +70,10 @@ Changelog
 0.2.14
 * Exclude test package
 
+0.2.15
+* Review consumption and production indices for solar series
+* Fix caching for local polling
+
 Support
 -------
 If you find a bug, have any questions about how to use PySmappee or have suggestions for improvements then feel free to 
