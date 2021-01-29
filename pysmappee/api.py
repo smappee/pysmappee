@@ -254,7 +254,7 @@ class SmappeeLocalApi:
         self.production_indices = ['phase3ActivePower', 'phase4ActivePower', 'phase5ActivePower']
 
         # cache instantaneous load
-        self.load_cache = TTLCache(maxsize=1, ttl=5)
+        self.load_cache = TTLCache(maxsize=2, ttl=5)
 
     @property
     def host(self):
@@ -321,8 +321,10 @@ class SmappeeLocalApi:
         :param solar:
         :return:
         """
-        if 'instantaneous' in self.load_cache:
-            return self.load_cache['instantaneous']
+        if solar and 'instantaneous_solar' in self.load_cache:
+            return self.load_cache['instantaneous_solar']
+        elif not solar and 'instantaneous_load' in self.load_cache:
+            return self.load_cache['instantaneous_load']
 
         inst = self.load_instantaneous()
 
@@ -336,7 +338,11 @@ class SmappeeLocalApi:
             power = int(sum(values) / 1000)
         else:
             power = 0
-        self.load_cache['instantaneous'] = power
+
+        if solar:
+            self.load_cache['instantaneous_solar'] = power
+        else:
+            self.load_cache['instantaneous_load'] = power
 
         return power
 
