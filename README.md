@@ -70,7 +70,7 @@ Changelog
 0.2.14
 * Exclude test package
 
-0.2.15
+0.2.{15, 16}
 * Review consumption and production indices for solar series
 * Fix caching for local polling
 
