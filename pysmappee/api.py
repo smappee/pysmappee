@@ -306,7 +306,34 @@ class SmappeeLocalApi:
         return cc
 
     def load_config(self):
-        return self._post(url='configPublic', data='load')
+        c = self._post(url='configPublic', data='load')
+
+        # get emeterConfiguration to decide cons and prod indices for solar series (11)
+        emeterConfiguration = None
+        for conf in c:
+            if 'key' in conf and conf['key'] == 'emeterConfiguration' and 'value' in conf:
+                emeterConfiguration = conf['value']
+
+        # three phase grid and solar
+        if emeterConfiguration == "11":
+            pass  # use default ones
+        # single phase grid and solar
+        elif emeterConfiguration == "17":
+            self.consumption_indices = ['phase0ActivePower']
+            self.production_indices = ['phase1ActivePower']
+        # three phase grid, no solar
+        elif emeterConfiguration == "4":
+            self.production_indices = []
+        # single phase grid, no solar
+        elif emeterConfiguration == "0":
+            self.consumption_indices = ['phase0ActivePower']
+            self.production_indices = []
+        # dual phase grid and solar
+        elif emeterConfiguration == "16":
+            self.consumption_indices = ['phase0ActivePower', 'phase1ActivePower']
+            self.production_indices = ['phase2ActivePower', 'phase3ActivePower']
+
+        return c
 
     def load_command_control_config(self):
         return self._post(url='commandControlPublic', data='load')
