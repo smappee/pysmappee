@@ -24,11 +24,11 @@ config['MQTT'] = {
     },
     2: {
         'host': 'mqtttest.smappee.net',
-        'port': 10000,
+        'port': 80,
     },
     3: {
         'host': 'mqttdev.smappee.net',
-        'port': 10000,
+        'port': 80,
     },
     'local': {  # only accessible from same network
         'port': 1883,
