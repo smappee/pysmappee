@@ -6,7 +6,7 @@ Python Library for the Smappee dev API (v3) and MQTT interface. Used as a wrappe
 Version
 -------
 
-0.2.16
+0.2.17
 
 Installation
 ------------
@@ -70,7 +70,7 @@ Changelog
 0.2.14
 * Exclude test package
 
-0.2.{15, 16}
+0.2.{15, 16, 17}
 * Review consumption and production indices for solar series
 * Fix caching for local polling
 
