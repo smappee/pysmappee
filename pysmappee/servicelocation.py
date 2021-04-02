@@ -89,35 +89,39 @@ class SmappeeServiceLocation(object):
             self._service_location_name = f'Smappee {self.device_serial_number} local'
             self._service_location_uuid = 0
 
-            # Load actuators
-            self.smappee_api.logon()
-            command_control_config = self.smappee_api.load_command_control_config()
-            if command_control_config is not None:
-                for ccc in command_control_config:
-                    if ccc.get('type') == '2':
-                        at = 'COMFORT_PLUG'
-                    elif ccc.get('type') == '3':
-                        at = 'SWITCH'
-                    else:
-                        # Unknown actuator type
-                        continue
-                    self._add_actuator(id=int(ccc.get('key')),
-                                       name=ccc.get('value'),
-                                       serialnumber=ccc.get('serialNumber'),
-                                       state_values=[
-                                           {'id': 'ON_ON', 'name': 'on', 'current': ccc.get('relayStatus') is True},
-                                           {'id': 'OFF_OFF', 'name': 'off', 'current': ccc.get('relayStatus') is False}],
-                                       connection_state=ccc.get('connectionStatus').upper() if 'connectionStatus' in ccc else None,
-                                       actuator_type=at)
+            if self._device_serial_number.startswith('50'):
+                self._has_reactive_value = True
+                self._phase_type = self.smappee_api.phase_type
+            else:
+                # Load actuators
+                self.smappee_api.logon()
+                command_control_config = self.smappee_api.load_command_control_config()
+                if command_control_config is not None:
+                    for ccc in command_control_config:
+                        if ccc.get('type') == '2':
+                            at = 'COMFORT_PLUG'
+                        elif ccc.get('type') == '3':
+                            at = 'SWITCH'
+                        else:
+                            # Unknown actuator type
+                            continue
+                        self._add_actuator(id=int(ccc.get('key')),
+                                           name=ccc.get('value'),
+                                           serialnumber=ccc.get('serialNumber'),
+                                           state_values=[
+                                               {'id': 'ON_ON', 'name': 'on', 'current': ccc.get('relayStatus') is True},
+                                               {'id': 'OFF_OFF', 'name': 'off', 'current': ccc.get('relayStatus') is False}],
+                                           connection_state=ccc.get('connectionStatus').upper() if 'connectionStatus' in ccc else None,
+                                           actuator_type=at)
 
-            # Load channels config pro Smappee11 and 2-series and only
-            if self._device_serial_number.startswith('11'):
-                self.smappee_api.load_config()
-            elif self._device_serial_number.startswith('2'):
-                channels_config = self.smappee_api.load_channels_config()
-                for input_channel in channels_config['inputChannels']:
-                    if input_channel['inputChannelType'] == 'PRODUCTION' and input_channel['inputChannelConnection'] == 'GRID':
-                        self.has_solar_production = True
+                # Load channels config pro Smappee11 and 2-series and only
+                if self._device_serial_number.startswith('11'):
+                    self.smappee_api.load_config()
+                elif self._device_serial_number.startswith('2'):
+                    channels_config = self.smappee_api.load_channels_config()
+                    for input_channel in channels_config['inputChannels']:
+                        if input_channel['inputChannelType'] == 'PRODUCTION' and input_channel['inputChannelConnection'] == 'GRID':
+                            self.has_solar_production = True
 
         else:
             # Collect metering configuration
@@ -610,7 +614,12 @@ class SmappeeServiceLocation(object):
                     sensor.battery = consumption_result.get('records')[0].get('battery')
 
     def update_trends_and_appliance_states(self, ):
-        if self.local_polling:
+        if self.local_polling and self._device_serial_number.startswith('50'):
+            self._realtime_values['total_power'] = self.smappee_api.realtime.get('totalPower', 0)
+            self._realtime_values['total_reactive_power'] = self.smappee_api.realtime.get('totalReactivePower', 0)
+            self._realtime_values['phase_voltages'] = [v.get('voltage', 0) for v in self.smappee_api.realtime.get('voltages', [{}, {}, {}])]
+
+        elif self.local_polling:
             # Active power
             tp = self.smappee_api.active_power()
             if tp is not None:

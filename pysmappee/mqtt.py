@@ -265,3 +265,99 @@ class SmappeeMqtt(threading.Thread):
 
     def stop(self):
         self._client.loop_stop()
+
+
+class SmappeeLocalMqtt(threading.Thread):
+    """Smappee local MQTT wrapper."""
+
+    def __init__(self, serial_number):
+        self._client = None
+        self._serial_number = serial_number
+        self._service_location_uuid = None
+        threading.Thread.__init__(
+            self,
+            name=f'SmappeeLocalMqttListener_{self._serial_number}'
+        )
+        self.realtime = {}
+        self.phase_type = None
+        self._timezone = None
+
+    @property
+    def topic_prefix(self):
+        return f'servicelocation/{self._service_location_uuid}'
+
+    def _on_connect(self, client, userdata, flags, rc):
+        self._client.subscribe(topic='#')
+
+    def _on_disconnect(self, client, userdata, rc):
+        pass
+
+    def _get_client_id(self):
+        return f"smappeeLocalMQTT-{self._serial_number}"
+
+    def _on_message(self, client, userdata, message):
+        try:
+            # realtime local power values
+            if message.topic.endswith('/realtime'):
+                self.realtime = json.loads(message.payload)
+            elif message.topic.endswith('/config'):
+                c = json.loads(message.payload)
+                self._timezone = c.get('timeZone')
+                self._serviceLocationId = c.get('serviceLocationId')
+                self._serviceLocationUuid = c.get('serviceLocationUid')
+            elif message.topic.endswith('/channelConfigV2'):
+                self._channel_config = json.loads(message.payload)
+                self.phase_type = self._channel_config.get('dataProcessingSpecification', {}).get('phaseType', None)
+                print(self._channel_config)
+            elif message.topic.endswith('/sensorConfig'):
+                print('Processing MQTT message from topic {0} with value {1}'.format(message.topic, message.payload))
+                pass
+            elif message.topic.endswith('/homeControlConfig'):
+                self._home_control_config = json.loads(message.payload)
+                print('Processing MQTT message from topic {0} with value {1}'.format(message.topic, message.payload))
+            elif message.topic.endswith('/presence'):
+                pass
+            elif message.topic.endswith('/aggregated'):
+                pass
+            else:
+                print('Processing MQTT message from topic {0} with value {1}'.format(message.topic, message.payload))
+
+        except Exception:
+            traceback.print_exc()
+
+    def is_config_ready(self, timeout=60):
+        c = 0
+        while c < timeout:
+            if self.phase_type is not None:
+                break
+            c += 1
+            time.sleep(1)
+
+    def start_attempt(self):
+        client = mqtt.Client(client_id='smappeeLocalMqttConnectionAttempt')
+        try:
+            client.connect(host=f'smappee{self._serial_number}.local', port=config['MQTT']['local']['port'])
+        except Exception:
+            return False
+
+        return True
+
+    def start(self):
+        self._client = mqtt.Client(client_id=self._get_client_id())
+        self._client.on_connect = lambda client, userdata, flags, rc: self._on_connect(client, userdata, flags, rc)
+        self._client.on_message = lambda client, userdata, message: self._on_message(client, userdata, message)
+        self._client.on_disconnect = lambda client, userdata, rc: self._on_disconnect(client, userdata, rc)
+
+        #  self._client.tls_set(None, cert_reqs=ssl.CERT_NONE, tls_version=ssl.PROTOCOL_TLSv1)
+        try:
+            self._client.connect(host=f'smappee{self._serial_number}.local', port=config['MQTT']['local']['port'])
+        except socket.gaierror as _:
+            # unable to connect to local Smappee device (host unavailable)
+            return
+        except socket.timeout as _:
+            return
+
+        self._client.loop_start()
+
+    def stop(self):
+        self._client.loop_stop()
