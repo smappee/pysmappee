@@ -308,13 +308,10 @@ class SmappeeLocalMqtt(threading.Thread):
             elif message.topic.endswith('/channelConfigV2'):
                 self._channel_config = json.loads(message.payload)
                 self.phase_type = self._channel_config.get('dataProcessingSpecification', {}).get('phaseType', None)
-                print(self._channel_config)
             elif message.topic.endswith('/sensorConfig'):
-                print('Processing MQTT message from topic {0} with value {1}'.format(message.topic, message.payload))
                 pass
             elif message.topic.endswith('/homeControlConfig'):
                 self._home_control_config = json.loads(message.payload)
-                print('Processing MQTT message from topic {0} with value {1}'.format(message.topic, message.payload))
             elif message.topic.endswith('/presence'):
                 pass
             elif message.topic.endswith('/aggregated'):
