@@ -90,8 +90,43 @@ class SmappeeServiceLocation(object):
             self._service_location_uuid = 0
 
             if self._device_serial_number.startswith('50'):
+                self.smappee_api.service_location = self
                 self._has_reactive_value = True
                 self._phase_type = self.smappee_api.phase_type
+
+                for switch in self.smappee_api.switch_sensors:
+                    current_state = False
+                    if self.smappee_api.actuators_state.get(switch['nodeId']) == 'ON':
+                        current_state = True
+
+                    self._add_actuator(
+                        id=switch['nodeId'],
+                        name=switch['name'],
+                        serialnumber=switch['serialNumber'],
+                        state_values=[
+                            {'id': 'ON_ON', 'name': 'on', 'current': True if current_state else False},
+                            {'id': 'OFF_OFF', 'name': 'off', 'current': False if current_state else True}
+                        ],
+                        connection_state=self.smappee_api.actuators_connection_state.get(switch['nodeId'], 'CONNECTED'),
+                        actuator_type='SWITCH'
+                    )
+
+                for plug in self.smappee_api.smart_plugs:
+                    current_state = False
+                    if self.smappee_api.actuators_state.get(plug['nodeId']) == 'ON':
+                        current_state = True
+
+                    self._add_actuator(
+                        id=plug['nodeId'],
+                        name=plug['name'],
+                        serialnumber=None,
+                        state_values=[
+                            {'id': 'ON_ON', 'name': 'on', 'current': True if current_state else False},
+                            {'id': 'OFF_OFF', 'name': 'off', 'current': False if current_state else True}
+                        ],
+                        connection_state='CONNECTED',
+                        actuator_type='COMFORT_PLUG'
+                    )
             else:
                 # Load actuators
                 self.smappee_api.logon()

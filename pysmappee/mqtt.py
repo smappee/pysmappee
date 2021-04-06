@@ -272,7 +272,9 @@ class SmappeeLocalMqtt(threading.Thread):
 
     def __init__(self, serial_number):
         self._client = None
+        self.service_location = None
         self._serial_number = serial_number
+        self._service_location_id = None
         self._service_location_uuid = None
         threading.Thread.__init__(
             self,
@@ -280,6 +282,10 @@ class SmappeeLocalMqtt(threading.Thread):
         )
         self.realtime = {}
         self.phase_type = None
+        self.switch_sensors = []
+        self.smart_plugs = []
+        self.actuators_connection_state = {}
+        self.actuators_state = {}
         self._timezone = None
 
     @property
@@ -303,32 +309,87 @@ class SmappeeLocalMqtt(threading.Thread):
             elif message.topic.endswith('/config'):
                 c = json.loads(message.payload)
                 self._timezone = c.get('timeZone')
-                self._serviceLocationId = c.get('serviceLocationId')
-                self._serviceLocationUuid = c.get('serviceLocationUid')
+                self._service_location_id = c.get('serviceLocationId')
+                self._service_location_uuid = c.get('serviceLocationUuid')
+            elif message.topic.endswith('channelConfig'):
+                pass
             elif message.topic.endswith('/channelConfigV2'):
                 self._channel_config = json.loads(message.payload)
                 self.phase_type = self._channel_config.get('dataProcessingSpecification', {}).get('phaseType', None)
             elif message.topic.endswith('/sensorConfig'):
                 pass
             elif message.topic.endswith('/homeControlConfig'):
-                self._home_control_config = json.loads(message.payload)
+                # switches
+                switches = json.loads(message.payload).get('switchActuators', [])
+                for switch in switches:
+                    self.switch_sensors.append({
+                        'nodeId': switch['nodeId'],
+                        'name': switch['name'],
+                        'serialNumber': switch['serialNumber']
+                    })
+
+                # plugs
+                plugs = json.loads(message.payload).get('smartplugActuators', [])
+                for plug in plugs:
+                    self.smart_plugs.append({
+                        'nodeId': plug['nodeId'],
+                        'name': plug['name']
+                    })
             elif message.topic.endswith('/presence'):
                 pass
             elif message.topic.endswith('/aggregated'):
                 pass
+            elif message.topic.endswith('/aggregatedSwitch'):
+                pass
+            elif message.topic.endswith('/etc/measuredvalues'):
+                pass
+            elif message.topic.endswith('/networkstatistics'):
+                pass
+            elif message.topic.endswith('/scheduler'):
+                pass
+            elif message.topic.endswith('/connectionState'):
+                actuator_id = int(message.topic.split('/')[-2])
+                self.actuators_connection_state[actuator_id] = json.loads(message.payload).get('value')
+            elif message.topic.endswith('/state'):
+                actuator_id = int(message.topic.split('/')[-2])
+                self.actuators_state[actuator_id] = json.loads(message.payload).get('value')
+
+                if self.service_location is not None:
+                    self.service_location.set_actuator_state(
+                        id=actuator_id,
+                        state='{0}_{0}'.format(self.actuators_state[actuator_id]),
+                        api=False
+                    )
+            elif message.topic.endswith('/setstate'):
+                actuator_id = int(message.topic.split('/')[-2])
+                p = str(message.payload.decode('utf-8')).replace("\'", "\"")
+                self.actuators_state[actuator_id] = json.loads(p).get('value')
             else:
                 print('Processing MQTT message from topic {0} with value {1}'.format(message.topic, message.payload))
 
         except Exception:
             traceback.print_exc()
 
-    def is_config_ready(self, timeout=60):
+    def set_actuator_state(self, service_location_id, actuator_id, state_id):
+        state = None
+        if state_id == 'ON_ON':
+            state = 'ON'
+        elif state_id == 'OFF_OFF':
+            state = 'OFF'
+
+        if state is not None:
+            self._client.publish(
+                topic="servicelocation/{0}/plug/{1}/setstate".format(self._service_location_uuid, actuator_id),
+                payload=json.dumps({"value": state})
+            )
+
+    def is_config_ready(self, timeout=60, interval=5):
         c = 0
         while c < timeout:
             if self.phase_type is not None:
                 break
-            c += 1
-            time.sleep(1)
+            c += interval
+            time.sleep(interval)
 
     def start_attempt(self):
         client = mqtt.Client(client_id='smappeeLocalMqttConnectionAttempt')
