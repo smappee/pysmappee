@@ -279,6 +279,7 @@ class SmappeeLocalMqtt(threading.Thread):
                 self._timezone = c.get('timeZone')
                 self._service_location_id = c.get('serviceLocationId')
                 self._service_location_uuid = c.get('serviceLocationUuid')
+                self._serial_number = c.get('serialNumber')
             elif message.topic.endswith('channelConfig'):
                 pass
             elif message.topic.endswith('/channelConfigV2'):
@@ -384,8 +385,8 @@ class SmappeeLocalMqtt(threading.Thread):
     def is_config_ready(self, timeout=60, interval=5):
         c = 0
         while c < timeout:
-            if self.phase_type is not None:
-                break
+            if self.phase_type is not None and self._serial_number is not None:
+                return self._serial_number
             c += interval
             time.sleep(interval)
 
