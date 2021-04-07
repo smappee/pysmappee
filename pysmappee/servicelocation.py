@@ -551,7 +551,7 @@ class SmappeeServiceLocation(object):
     def _update_realtime_data(self, realtime_data):
         # Use incoming realtime data (through local MQTT connection)
         self.total_power = realtime_data.get('totalPower')
-        self.reactive_power = realtime_data.get('totalReactivePower')
+        self.total_reactive_power = realtime_data.get('totalReactivePower')
         self.phase_voltages = [v.get('voltage', 0) for v in realtime_data.get('voltages')]
 
         active_power_data, current_data = {}, {}
