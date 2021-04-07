@@ -231,7 +231,7 @@ class SmappeeMqtt(threading.Thread):
 class SmappeeLocalMqtt(threading.Thread):
     """Smappee local MQTT wrapper."""
 
-    def __init__(self, serial_number):
+    def __init__(self, serial_number=None):
         self._client = None
         self.service_location = None
         self._serial_number = serial_number
