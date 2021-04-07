@@ -328,6 +328,8 @@ class SmappeeLocalMqtt(threading.Thread):
                 pass
             elif message.topic.endswith('/aggregated'):
                 pass
+            elif message.topic.endswith('/aggregatedGW'):
+                pass
             elif message.topic.endswith('/aggregatedSwitch'):
                 pass
             elif message.topic.endswith('/etc/measuredvalues'):
