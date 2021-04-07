@@ -241,12 +241,16 @@ class SmappeeLocalMqtt(threading.Thread):
             self,
             name=f'SmappeeLocalMqttListener_{self._serial_number}'
         )
+
         self.realtime = {}
         self.phase_type = None
+        self.measurements = {}
+
         self.switch_sensors = []
         self.smart_plugs = []
         self.actuators_connection_state = {}
         self.actuators_state = {}
+
         self._timezone = None
 
     @property
@@ -267,6 +271,9 @@ class SmappeeLocalMqtt(threading.Thread):
             # realtime local power values
             if message.topic.endswith('/realtime'):
                 self.realtime = json.loads(message.payload)
+                if self.service_location is not None:
+                    self.service_location._update_realtime_data(realtime_data=self.realtime)
+
             elif message.topic.endswith('/config'):
                 c = json.loads(message.payload)
                 self._timezone = c.get('timeZone')
@@ -277,6 +284,27 @@ class SmappeeLocalMqtt(threading.Thread):
             elif message.topic.endswith('/channelConfigV2'):
                 self._channel_config = json.loads(message.payload)
                 self.phase_type = self._channel_config.get('dataProcessingSpecification', {}).get('phaseType', None)
+
+                # extract measurements from channelConfigV2
+                measurements_dict = {}
+                for m in self._channel_config.get('dataProcessingSpecification', {}).get('measurements', []):
+                    if m.get('flow') == 'CONSUMPTION' and m.get('connectionType') == 'SUBMETER':
+                        if not m['name'] in measurements_dict.keys():
+                            measurements_dict[m['name']] = []
+                        measurements_dict[m['name']].append(m['publishIndex'])
+                    elif m.get('flow') == 'CONSUMPTION' and m.get('connectionType') == 'GRID':
+                        if not 'Grid' in measurements_dict.keys():
+                            measurements_dict['Grid'] = []
+                        measurements_dict['Grid'].append(m['publishIndex'])
+                    elif m.get('flow') == 'PRODUCTION' and m.get('connectionType') == 'GRID':
+                        if not 'Solar' in measurements_dict.keys():
+                            measurements_dict['Solar'] = []
+                        measurements_dict['Solar'].append(m['publishIndex'])
+
+                self.measurements = {}
+                for m_name, m_index in measurements_dict.items():
+                    self.measurements[m_name] = list(set(m_index))
+
             elif message.topic.endswith('/sensorConfig'):
                 pass
             elif message.topic.endswith('/homeControlConfig'):

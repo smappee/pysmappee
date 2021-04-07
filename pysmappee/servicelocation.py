@@ -125,6 +125,16 @@ class SmappeeServiceLocation(object):
                         connection_state='CONNECTED',
                         actuator_type='COMFORT_PLUG'
                     )
+
+                for measurement_name, measurement_index in self.smappee_api.measurements.items():
+                    self._add_measurement(
+                        id=min(measurement_index),
+                        name=measurement_name,
+                        type='CT',
+                        subcircuitType=None,
+                        channels=[{'consumptionIndex': m} for m in measurement_index]
+                    )
+
             else:
                 # Load actuators
                 self.smappee_api.logon()
@@ -629,10 +639,7 @@ class SmappeeServiceLocation(object):
 
     def update_trends_and_appliance_states(self, ):
         if self.local_polling and self._device_serial_number.startswith('50'):
-            self._realtime_values['total_power'] = self.smappee_api.realtime.get('totalPower', 0)
-            self._realtime_values['total_reactive_power'] = self.smappee_api.realtime.get('totalReactivePower', 0)
-            self._realtime_values['phase_voltages'] = [v.get('voltage', 0) for v in self.smappee_api.realtime.get('voltages', [{}, {}, {}])]
-
+            pass
         elif self.local_polling:
             # Active power
             tp = self.smappee_api.active_power()
