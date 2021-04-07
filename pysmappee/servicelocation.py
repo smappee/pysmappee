@@ -4,7 +4,6 @@ from .actuator import SmappeeActuator
 from .appliance import SmappeeAppliance
 from .measurement import SmappeeMeasurement
 from .sensor import SmappeeSensor
-from .smart_device import SmappeeSmartDevice
 from cachetools import TTLCache
 
 
@@ -36,12 +35,11 @@ class SmappeeServiceLocation(object):
         # presence
         self._presence = None
 
-        # dicts to hold appliances, smart switches, ct details and smart devices by id
+        # dicts to hold appliances, smart switches and ct details by id
         self._appliances = {}
         self._actuators = {}
         self._sensors = {}
         self._measurements = {}
-        self._smart_devices = {}
 
         # realtime values
         self._realtime_values = {
@@ -423,19 +421,6 @@ class SmappeeServiceLocation(object):
                                                    channels=channels)
 
     @property
-    def smart_devices(self):
-        return self._smart_devices
-
-    def _add_smart_device(self, uuid, name, category, implementation, minCurrent, maxCurrent, measurements):
-        self.smart_devices[uuid] = SmappeeSmartDevice(uuid=uuid,
-                                                      name=name,
-                                                      category=category,
-                                                      implementation=implementation,
-                                                      minCurrent=minCurrent,
-                                                      maxCurrent=maxCurrent,
-                                                      measurements=measurements)
-
-    @property
     def total_power(self):
         return self._realtime_values.get('total_power')
 
@@ -552,12 +537,6 @@ class SmappeeServiceLocation(object):
             current_data = power_data.get('currentData')
             for _, measurement in self.measurements.items():
                 measurement.update_current(current=current_data)
-
-        # update smart devices power
-        # for uuid, smart_device in self.smart_devices.items():
-        #     smart_device.update_active(active=active_power_data)
-        #     smart_device.update_reactive(reactive=reactive_power_data)
-        #     smart_device.update_current(current=current_data)
 
     def _update_realtime_data(self, realtime_data):
         # Use incoming realtime data (through local MQTT connection)

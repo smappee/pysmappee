@@ -166,46 +166,7 @@ class SmappeeMqtt(threading.Thread):
 
             # smart device and ETC topics
             elif message.topic.startswith(f'{self.topic_prefix}/etc/'):
-                if message.topic.endswith('/devices'):
-                    devices = json.loads(message.payload)
-                    for device in devices:
-                        self._service_location._add_smart_device(
-                            uuid=device.get('uuid'),
-                            name=device.get('name'),
-                            category=device.get('category'),
-                            implementation=device.get('implementation'),
-                            minCurrent=device.get('minimumCurrent'),
-                            maxCurrent=device.get('maximumCurrent'),
-                            measurements=device.get('measurements'),
-                        )
-                elif message.topic.endswith('/devices/updated'):
-                    pass
-                elif message.topic.endswith('/action/setcurrent'):
-                    smart_device_uuid = message.topic.split('/')[-3]
-                    set_current_details = json.loads(message.payload)
-                    self._service_location.smart_devices[smart_device_uuid].set_current(
-                        phase=set_current_details.get('phase'),
-                        current=set_current_details.get('value')
-                    )
-                elif message.topic.endswith('/action/startcharging'):
-                    pass
-                elif message.topic.endswith('/action/stopcharging'):
-                    pass
-                elif message.topic.endswith('/action/smartcharging'):
-                    pass
-                elif message.topic.endswith('/state'):
-                    details = json.loads(message.payload)
-                    smart_device_uuid = details.get('deviceUUID')
-                    connection_status = details.get('connectionStatus')
-                    if smart_device_uuid in self._service_location.smart_devices:
-                        self._service_location.smart_devices[smart_device_uuid].set_connection_status(connection_status=connection_status)
-                elif message.topic.endswith('/etc/measuredvalues'):
-                    pass
-                elif message.topic.endswith('/property/chargingstate'):
-                    pass
-
-                elif config['MQTT']['discovery']:
-                    print(message.topic, message.payload)
+                pass
 
             # specific HASS.io topics
             elif message.topic == f'{self.topic_prefix}/homeassistant/event':
