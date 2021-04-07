@@ -311,11 +311,12 @@ class SmappeeLocalMqtt(threading.Thread):
                 # switches
                 switches = json.loads(message.payload).get('switchActuators', [])
                 for switch in switches:
-                    self.switch_sensors.append({
-                        'nodeId': switch['nodeId'],
-                        'name': switch['name'],
-                        'serialNumber': switch['serialNumber']
-                    })
+                    if switch['serialNumber'].startswith('4006'):
+                        self.switch_sensors.append({
+                            'nodeId': switch['nodeId'],
+                            'name': switch['name'],
+                            'serialNumber': switch['serialNumber']
+                        })
 
                 # plugs
                 plugs = json.loads(message.payload).get('smartplugActuators', [])
