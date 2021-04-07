@@ -336,6 +336,12 @@ class SmappeeLocalMqtt(threading.Thread):
                 pass
             elif message.topic.endswith('/scheduler'):
                 pass
+            elif message.topic.endswith('/devices'):
+                pass
+            elif message.topic.endswith('/action/setcurrent'):
+                pass
+            elif message.topic.endswith('/trigger'):
+                pass
             elif message.topic.endswith('/connectionState'):
                 actuator_id = int(message.topic.split('/')[-2])
                 self.actuators_connection_state[actuator_id] = json.loads(message.payload).get('value')
