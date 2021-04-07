@@ -88,10 +88,12 @@ class SmappeeServiceLocation(object):
             self._service_location_uuid = 0
 
             if self._device_serial_number.startswith('50'):
+                # Prepare incoming mqtt messages
                 self.smappee_api.service_location = self
                 self._has_reactive_value = True
                 self._phase_type = self.smappee_api.phase_type
 
+                # Load Smappee switches
                 for switch in self.smappee_api.switch_sensors:
                     current_state = False
                     if self.smappee_api.actuators_state.get(switch['nodeId']) == 'ON':
@@ -109,6 +111,7 @@ class SmappeeServiceLocation(object):
                         actuator_type='SWITCH'
                     )
 
+                # Load Smappee comfort plugs
                 for plug in self.smappee_api.smart_plugs:
                     current_state = False
                     if self.smappee_api.actuators_state.get(plug['nodeId']) == 'ON':
@@ -126,6 +129,7 @@ class SmappeeServiceLocation(object):
                         actuator_type='COMFORT_PLUG'
                     )
 
+                # Load all CT measurements
                 for measurement_name, measurement_index in self.smappee_api.measurements.items():
                     self._add_measurement(
                         id=min(measurement_index),
