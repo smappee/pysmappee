@@ -359,7 +359,7 @@ class SmappeeLocalMqtt(threading.Thread):
                 actuator_id = int(message.topic.split('/')[-2])
                 p = str(message.payload.decode('utf-8')).replace("\'", "\"")
                 self.actuators_state[actuator_id] = json.loads(p).get('value')
-            else:
+            elif config['MQTT']['discovery']:
                 print('Processing MQTT message from topic {0} with value {1}'.format(message.topic, message.payload))
 
         except Exception:
