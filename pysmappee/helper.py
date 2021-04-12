@@ -15,3 +15,23 @@ def urljoin(*parts):
     # join everything together
     url = '/'.join(part_list)
     return url
+
+
+def is_smappee_energy(serialnumber: str):
+    return serialnumber.startswith('10')
+
+
+def is_smappee_solar(serialnumber: str):
+    return serialnumber.startswith('11')
+
+
+def is_smappee_plus(serialnumber: str):
+    return serialnumber.startswith('2')
+
+
+def is_smappee_genius(serialnumber: str):
+    return serialnumber.startswith('50')
+
+
+def is_smappee_connect(serialnumber: str):
+    return serialnumber.startswith('51')

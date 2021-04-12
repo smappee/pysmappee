@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from .mqtt import SmappeeMqtt
 from .actuator import SmappeeActuator
 from .appliance import SmappeeAppliance
+from .helper import is_smappee_solar, is_smappee_genius, is_smappee_connect, is_smappee_plus
 from .measurement import SmappeeMeasurement
 from .sensor import SmappeeSensor
 from cachetools import TTLCache
@@ -76,18 +77,18 @@ class SmappeeServiceLocation(object):
 
     def load_configuration(self, refresh=False):
         # Set solar production on 11-series (no measurements config available on non 50-series)
-        if self._device_serial_number.startswith('11'):
+        if is_smappee_solar(serialnumber=self._device_serial_number):
             self.has_solar_production = True
 
         # Set voltage values on 5-series
-        if self._device_serial_number.startswith('50') or self._device_serial_number.startswith('51'):
+        if is_smappee_genius(serialnumber=self._device_serial_number) or is_smappee_connect(serialnumber=self._device_serial_number):
             self.has_voltage_values = True
 
         if self.local_polling:
             self._service_location_name = f'Smappee {self.device_serial_number} local'
             self._service_location_uuid = 0
 
-            if self._device_serial_number.startswith('50'):
+            if is_smappee_genius(serialnumber=self._device_serial_number):
                 # Prepare incoming mqtt messages
                 self.smappee_api.service_location = self
                 self._has_reactive_value = True
@@ -162,9 +163,9 @@ class SmappeeServiceLocation(object):
                                            actuator_type=at)
 
                 # Load channels config pro Smappee11 and 2-series and only
-                if self._device_serial_number.startswith('11'):
+                if is_smappee_solar(serialnumber=self._device_serial_number):
                     self.smappee_api.load_config()
-                elif self._device_serial_number.startswith('2'):
+                elif is_smappee_plus(serialnumber=self._device_serial_number):
                     channels_config = self.smappee_api.load_channels_config()
                     for input_channel in channels_config['inputChannels']:
                         if input_channel['inputChannelType'] == 'PRODUCTION' and input_channel['inputChannelConnection'] == 'GRID':
@@ -226,7 +227,7 @@ class SmappeeServiceLocation(object):
                 self.mqtt_connection_central = self.load_mqtt_connection(kind='central')
 
                 # Only use a local MQTT broker for 20# or 50# series monitors
-                if self._device_serial_number.startswith('20') or self._device_serial_number.startswith('50'):
+                if is_smappee_plus(serialnumber=self._device_serial_number) or is_smappee_genius(serialnumber=self._device_serial_number):
                     self.mqtt_connection_local = self.load_mqtt_connection(kind='local')
                     self.has_reactive_value = True  # reactive only available through local MQTT
 
@@ -642,7 +643,7 @@ class SmappeeServiceLocation(object):
                     sensor.battery = consumption_result.get('records')[0].get('battery')
 
     def update_trends_and_appliance_states(self, ):
-        if self.local_polling and self._device_serial_number.startswith('50'):
+        if self.local_polling and is_smappee_genius(serialnumber=self._device_serial_number):
             pass
         elif self.local_polling:
             # Active power

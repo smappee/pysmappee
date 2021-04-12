@@ -390,6 +390,10 @@ class SmappeeLocalMqtt(threading.Thread):
             c += interval
             time.sleep(interval)
 
+    def start_and_wait_for_config(self):
+        self.start()
+        return self.is_config_ready()
+
     def start_attempt(self):
         client = mqtt.Client(client_id='smappeeLocalMqttConnectionAttempt')
         try:
