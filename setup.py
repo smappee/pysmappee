@@ -26,5 +26,6 @@ setuptools.setup(
         "pytz>=2019.3",
         "requests>=2.23.0",
         "requests-oauthlib>=1.3.0",
+        "schedule>=1.1.0",
     ],
 )
