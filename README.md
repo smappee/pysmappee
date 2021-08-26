@@ -6,7 +6,7 @@ Python Library for the Smappee dev API (v3) and MQTT interface. Used as a wrappe
 Version
 -------
 
-0.2.26
+0.2.27
 
 Installation
 ------------
@@ -78,7 +78,7 @@ Changelog
 * Prepare local Smappee Genius support (local mqtt)
 * Remove smart device support
 
-0.2.26
+0.2.{26, 27}
 * Review tracking schedule
 
 
