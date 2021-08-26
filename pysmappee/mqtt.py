@@ -4,6 +4,8 @@ import threading
 import socket
 import time
 import traceback
+import schedule
+import uuid
 from functools import wraps
 import paho.mqtt.client as mqtt
 from .config import config
@@ -35,6 +37,7 @@ class SmappeeMqtt(threading.Thread):
         self._service_location = service_location
         self._kind = kind
         self._farm = farm
+        self._client_id = f"pysmappee-{self._service_location.service_location_uuid}-{self._kind}-{uuid.uuid4()}"
         self._last_tracking = 0
         self._last_heartbeat = 0
         threading.Thread.__init__(
@@ -46,11 +49,17 @@ class SmappeeMqtt(threading.Thread):
     def topic_prefix(self):
         return f'servicelocation/{self._service_location.service_location_uuid}'
 
+    @tracking
     def _on_connect(self, client, userdata, flags, rc):
         if self._kind == 'local':
             self._client.subscribe(topic='#')
         else:
             self._client.subscribe(topic=f'{self.topic_prefix}/#')
+            self._schedule_tracking_and_heartbeat()
+
+    def _schedule_tracking_and_heartbeat(self):
+        schedule.every(60).seconds.do(lambda: self._publish_tracking())
+        schedule.every(60).seconds.do(lambda: self._publish_heartbeat())
 
     def _publish_tracking(self):
         # turn OFF current tracking and restore
@@ -58,7 +67,7 @@ class SmappeeMqtt(threading.Thread):
             topic=f"{self.topic_prefix}/tracking",
             payload=json.dumps({
                 "value": "OFF",
-                "clientId": self._get_client_id(),
+                "clientId": self._client_id,
                 "serialNumber": self._service_location.device_serial_number,
                 "type": "RT_VALUES",
             })
@@ -68,7 +77,7 @@ class SmappeeMqtt(threading.Thread):
             topic=f"{self.topic_prefix}/tracking",
             payload=json.dumps({
                 "value": "ON",
-                "clientId": self._get_client_id(),
+                "clientId": self._client_id,
                 "serialNumber": self._service_location.device_serial_number,
                 "type": "RT_VALUES",
             })
@@ -86,9 +95,6 @@ class SmappeeMqtt(threading.Thread):
 
     def _on_disconnect(self, client, userdata, rc):
         pass
-
-    def _get_client_id(self):
-        return f"smappeeMQTT-python-api-{self._service_location.service_location_uuid}-{self._kind}-{int(time.time())}"
 
     @tracking
     def _on_message(self, client, userdata, message):
@@ -200,7 +206,7 @@ class SmappeeMqtt(threading.Thread):
             traceback.print_exc()
 
     def start(self):
-        self._client = mqtt.Client(client_id=self._get_client_id())
+        self._client = mqtt.Client(client_id=self._client_id)
         if self._kind == 'central':
             self._client.username_pw_set(username=self._service_location.service_location_uuid,
                                          password=self._service_location.service_location_uuid)
