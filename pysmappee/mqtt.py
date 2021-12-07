@@ -216,6 +216,7 @@ class SmappeeMqtt(threading.Thread):
 
         #  self._client.tls_set(None, cert_reqs=ssl.CERT_NONE, tls_version=ssl.PROTOCOL_TLSv1)
         if self._kind == 'central':
+            self._client.tls_set()
             self._client.connect(host=config['MQTT'][self._farm]['host'],
                                  port=config['MQTT'][self._farm]['port'])
         elif self._kind == 'local':
