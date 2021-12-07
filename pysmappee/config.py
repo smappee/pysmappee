@@ -19,16 +19,16 @@ config['API_URL'] = {
 
 config['MQTT'] = {
     1: {
-        'host': '52.51.163.167',
-        'port': 80,
+        'host': 'mqtt.smappee.net',
+        'port': 443,
     },
     2: {
         'host': 'mqtttest.smappee.net',
-        'port': 80,
+        'port': 443,
     },
     3: {
         'host': 'mqttdev.smappee.net',
-        'port': 80,
+        'port': 443,
     },
     'local': {  # only accessible from same network
         'port': 1883,
