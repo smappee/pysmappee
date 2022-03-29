@@ -23,7 +23,6 @@ setuptools.setup(
     install_requires=[
         "cachetools>=4.0.0",
         "paho-mqtt>=1.5.0",
-        "pytz>=2019.3",
         "requests>=2.23.0",
         "requests-oauthlib>=1.3.0",
         "schedule>=1.1.0",

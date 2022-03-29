@@ -2,7 +2,6 @@
 import datetime as dt
 import functools
 import numbers
-import pytz
 import requests
 from cachetools import TTLCache
 from requests.exceptions import HTTPError, ConnectTimeout, ReadTimeout, \
@@ -211,7 +210,7 @@ class SmappeeApi:
     def _to_milliseconds(self, time):
         if isinstance(time, dt.datetime):
             if time.tzinfo is None:
-                time = time.replace(tzinfo=pytz.UTC)
+                time = time.replace(tzinfo=dt.timezone.utc)
             return int(time.timestamp() * 1e3)
         elif isinstance(time, numbers.Number):
             return time
