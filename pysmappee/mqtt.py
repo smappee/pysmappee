@@ -255,6 +255,7 @@ class SmappeeLocalMqtt(threading.Thread):
 
         self.switch_sensors = []
         self.smart_plugs = []
+        self.output_modules = []
         self.actuators_connection_state = {}
         self.actuators_state = {}
 
@@ -332,6 +333,14 @@ class SmappeeLocalMqtt(threading.Thread):
                     self.smart_plugs.append({
                         'nodeId': plug['nodeId'],
                         'name': plug['name']
+                    })
+                # outputmodules
+                output_modules = json.loads(message.payload).get('outputModules', [])
+                for output_module in output_modules:
+                    self.output_modules.append({
+                        'nodeId': output_module['nodeId'],
+                        'name': output_module['name'],
+                        'serialNumber': output_module['serialNumber']
                     })
             elif message.topic.endswith('/presence'):
                 pass
