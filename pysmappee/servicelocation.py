@@ -130,6 +130,24 @@ class SmappeeServiceLocation(object):
                         actuator_type='COMFORT_PLUG'
                     )
 
+                # Load Smappee output module INFINITY_OUTPUT_MODULE
+                for output_module in self.smappee_api.output_modules:
+                    current_state = False
+                    if self.smappee_api.actuators_state.get(output_module['nodeId']) == 'ON':
+                        current_state = True
+
+                    self._add_actuator(
+                        id=output_module['nodeId'],
+                        name=output_module['name'],
+                        serialnumber=output_module['serialNumber'],
+                        state_values=[
+                            {'id': 'ON_ON', 'name': 'on', 'current': True if current_state else False},
+                            {'id': 'OFF_OFF', 'name': 'off', 'current': False if current_state else True}
+                        ],
+                        connection_state='CONNECTED',
+                        actuator_type='SWITCH'
+                    )
+
                 # Load all CT measurements
                 for measurement_name, measurement_index in self.smappee_api.measurements.items():
                     self._add_measurement(
